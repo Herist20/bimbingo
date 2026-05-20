@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { getClient } from '@/lib/actions/clients';
+import { listCustomFields } from '@/lib/actions/custom-fields';
+import { CustomDataSection } from '@/components/custom-fields/custom-data-section';
 import { formatTanggal, formatTanggalRelatif } from '@/lib/format';
 
 export default async function ClientDetailPage({
@@ -14,10 +16,14 @@ export default async function ClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const result = await getClient(id);
+  const [result, cfResult] = await Promise.all([
+    getClient(id),
+    listCustomFields('client'),
+  ]);
   if (!result.ok || !result.data) notFound();
 
   const c = result.data;
+  const customFields = cfResult.ok ? cfResult.data.filter((f) => !f.archived_at) : [];
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
@@ -83,6 +89,8 @@ export default async function ClientDetailPage({
           </CardContent>
         </Card>
       ) : null}
+
+      <CustomDataSection fields={customFields} data={c.custom_data ?? {}} />
 
       <Separator />
 

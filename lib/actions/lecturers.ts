@@ -6,6 +6,11 @@ import {
   LecturerCreateSchema,
   LecturerUpdateSchema,
 } from '@/lib/schemas/lecturer';
+import {
+  buildCustomDataValidator,
+  type CustomFieldRow,
+} from '@/lib/schemas/custom-field';
+import type { Json } from '@/types/database';
 import { ActionError, fail, ok, requireUser, type ActionResult } from './_helper';
 
 export type LecturerRow = {
@@ -18,12 +23,31 @@ export type LecturerRow = {
   whatsapp: string | null;
   characteristics: string | null;
   tags: string[];
+  custom_data: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 };
 
 const COLUMNS =
-  'id, full_name, title, university, faculty, email, whatsapp, characteristics, tags, created_at, updated_at';
+  'id, full_name, title, university, faculty, email, whatsapp, characteristics, tags, custom_data, created_at, updated_at';
+
+async function fetchLecturerCustomFields(
+  supabase: Awaited<ReturnType<typeof getServerSupabase>>,
+): Promise<CustomFieldRow[]> {
+  const { data, error } = await supabase
+    .from('custom_fields')
+    .select(
+      'id, owner_id, entity_type, scope, scope_ref, key, label, description, field_type, options, required, default_value, sequence, show_in_form, show_in_list, show_in_card, archived_at, created_at, updated_at',
+    )
+    .eq('entity_type', 'lecturer')
+    .is('archived_at', null);
+  if (error) throw error;
+  return (data ?? []) as CustomFieldRow[];
+}
+
+function toJson(value: Record<string, unknown>): Json {
+  return value as unknown as Json;
+}
 
 export async function listLecturers(): Promise<ActionResult<LecturerRow[]>> {
   try {
@@ -89,9 +113,20 @@ export async function createLecturer(input: unknown): Promise<ActionResult<{ id:
       );
     }
     const supabase = await getServerSupabase();
+    const fields = await fetchLecturerCustomFields(supabase);
+    const cdRaw =
+      (input as { custom_data?: Record<string, unknown> } | null | undefined)?.custom_data ?? {};
+    const cdResult = buildCustomDataValidator(fields).safeParse(cdRaw);
+    if (!cdResult.success) {
+      throw new ActionError(
+        'validation_error',
+        'Field tambahan tidak valid.',
+        cdResult.error.flatten().fieldErrors as never,
+      );
+    }
     const { data, error } = await supabase
       .from('lecturers')
-      .insert({ ...parsed.data, owner_id: user.id })
+      .insert({ ...parsed.data, owner_id: user.id, custom_data: toJson(cdResult.data) })
       .select(COLUMNS)
       .single();
     if (error) throw error;
@@ -117,7 +152,23 @@ export async function updateLecturer(
       );
     }
     const supabase = await getServerSupabase();
-    const { error } = await supabase.from('lecturers').update(parsed.data).eq('id', id);
+    const cdRaw = (input as { custom_data?: Record<string, unknown> } | null | undefined)?.custom_data;
+    let custom_data: Json | undefined;
+    if (cdRaw !== undefined) {
+      const fields = await fetchLecturerCustomFields(supabase);
+      const cdResult = buildCustomDataValidator(fields).safeParse(cdRaw);
+      if (!cdResult.success) {
+        throw new ActionError(
+          'validation_error',
+          'Field tambahan tidak valid.',
+          cdResult.error.flatten().fieldErrors as never,
+        );
+      }
+      custom_data = toJson(cdResult.data);
+    }
+    const patch =
+      custom_data !== undefined ? { ...parsed.data, custom_data } : { ...parsed.data };
+    const { error } = await supabase.from('lecturers').update(patch).eq('id', id);
     if (error) throw error;
     revalidatePath('/lecturers');
     revalidatePath(`/lecturers/${id}`);
@@ -133,7 +184,6 @@ export async function deleteLecturer(id: string): Promise<ActionResult<{ id: str
     const supabase = await getServerSupabase();
     const { error } = await supabase.from('lecturers').delete().eq('id', id);
     if (error) {
-      // 23503 = foreign_key_violation (lecturer masih dipakai project_lecturers)
       if ((error as { code?: string }).code === '23503') {
         throw new ActionError(
           'conflict',

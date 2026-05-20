@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { getLecturer } from '@/lib/actions/lecturers';
+import { listCustomFields } from '@/lib/actions/custom-fields';
+import { CustomDataSection } from '@/components/custom-fields/custom-data-section';
 import { formatTanggal } from '@/lib/format';
 
 export default async function LecturerDetailPage({
@@ -14,9 +16,13 @@ export default async function LecturerDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const result = await getLecturer(id);
+  const [result, cfResult] = await Promise.all([
+    getLecturer(id),
+    listCustomFields('lecturer'),
+  ]);
   if (!result.ok || !result.data) notFound();
   const l = result.data;
+  const customFields = cfResult.ok ? cfResult.data.filter((f) => !f.archived_at) : [];
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
@@ -85,6 +91,8 @@ export default async function LecturerDetailPage({
           </CardContent>
         </Card>
       ) : null}
+
+      <CustomDataSection fields={customFields} data={l.custom_data ?? {}} />
 
       <Separator />
 

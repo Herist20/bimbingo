@@ -8,6 +8,8 @@ import { ProjectStatusBadge } from '@/components/projects/project-status-badge';
 import { MilestoneEditor } from '@/components/projects/milestone-editor';
 import { LecturerAssignments } from '@/components/projects/lecturer-assignments';
 import { getProject } from '@/lib/actions/projects';
+import { listCustomFields } from '@/lib/actions/custom-fields';
+import { CustomDataSection } from '@/components/custom-fields/custom-data-section';
 import { PROJECT_TYPE_LABEL } from '@/lib/schemas/project';
 import { formatRupiah, formatTanggal, formatTanggalRelatif } from '@/lib/format';
 
@@ -17,9 +19,13 @@ export default async function ProjectDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const result = await getProject(id);
+  const [result, cfResult] = await Promise.all([
+    getProject(id),
+    listCustomFields('project'),
+  ]);
   if (!result.ok || !result.data) notFound();
   const { project, milestones, lecturers, finance, progress_percent } = result.data;
+  const customFields = cfResult.ok ? cfResult.data.filter((f) => !f.archived_at) : [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -138,6 +144,8 @@ export default async function ProjectDetailPage({
           ) : null}
         </CardContent>
       </Card>
+
+      <CustomDataSection fields={customFields} data={project.custom_data ?? {}} />
 
       <Separator />
 

@@ -2,8 +2,14 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LecturerForm } from '@/components/lecturers/lecturer-form';
+import { listCustomFields } from '@/lib/actions/custom-fields';
 
-export default function NewLecturerPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function NewLecturerPage() {
+  const cfResult = await listCustomFields('lecturer');
+  const customFields = cfResult.ok ? cfResult.data : [];
+
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <Link
@@ -22,7 +28,7 @@ export default function NewLecturerPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <LecturerForm mode="create" />
+          <LecturerForm mode="create" customFields={customFields} />
         </CardContent>
       </Card>
     </div>

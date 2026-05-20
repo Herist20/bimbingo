@@ -3,6 +3,9 @@ import { ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProjectForm } from '@/components/projects/project-form';
 import { getClient } from '@/lib/actions/clients';
+import { listCustomFields } from '@/lib/actions/custom-fields';
+
+export const dynamic = 'force-dynamic';
 
 export default async function NewProjectPage({
   searchParams,
@@ -10,11 +13,13 @@ export default async function NewProjectPage({
   searchParams: Promise<{ client_id?: string }>;
 }) {
   const params = await searchParams;
-  let initialClient = null;
-  if (params.client_id) {
-    const result = await getClient(params.client_id);
-    if (result.ok) initialClient = result.data;
-  }
+  const [maybeClient, cfResult] = await Promise.all([
+    params.client_id ? getClient(params.client_id) : Promise.resolve(null),
+    listCustomFields('project'),
+  ]);
+  const initialClient =
+    maybeClient && 'ok' in maybeClient && maybeClient.ok ? maybeClient.data : null;
+  const customFields = cfResult.ok ? cfResult.data : [];
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -35,7 +40,7 @@ export default async function NewProjectPage({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ProjectForm initialClient={initialClient} />
+          <ProjectForm initialClient={initialClient} customFields={customFields} />
         </CardContent>
       </Card>
     </div>

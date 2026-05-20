@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProjectsTable } from '@/components/projects/projects-table';
+import { AddFieldButton } from '@/components/custom-fields/add-field-button';
 import { listProjects } from '@/lib/actions/projects';
 
 export const dynamic = 'force-dynamic';
@@ -19,12 +20,15 @@ export default async function ProjectsPage() {
             Daftar proyek skripsi yang sedang & sudah dikerjakan.
           </p>
         </div>
-        <Button asChild>
-          <Link href="/projects/new">
-            <Plus className="h-4 w-4" />
-            Tambah proyek
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <AddFieldButton entityType="project" />
+          <Button asChild>
+            <Link href="/projects/new">
+              <Plus className="h-4 w-4" />
+              Tambah proyek
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {!result.ok ? (

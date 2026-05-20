@@ -4,11 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClientsTable } from '@/components/clients/clients-table';
 import { listClients } from '@/lib/actions/clients';
+import { listCustomFields } from '@/lib/actions/custom-fields';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ClientsPage() {
-  const result = await listClients({ includeArchived: true });
+  const [result, cfResult] = await Promise.all([
+    listClients({ includeArchived: true }),
+    listCustomFields('client'),
+  ]);
+  const customFields = cfResult.ok ? cfResult.data : [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -50,7 +55,7 @@ export default async function ClientsPage() {
           </CardContent>
         </Card>
       ) : (
-        <ClientsTable data={result.data} />
+        <ClientsTable data={result.data} customFields={customFields} />
       )}
     </div>
   );

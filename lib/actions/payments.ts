@@ -8,7 +8,30 @@ import {
   PaymentUpdateSchema,
   type PaymentMethod,
 } from '@/lib/schemas/payment';
+import {
+  buildCustomDataValidator,
+  type CustomFieldRow,
+} from '@/lib/schemas/custom-field';
+import type { Json } from '@/types/database';
 import { ActionError, fail, ok, requireUser, type ActionResult } from './_helper';
+
+async function fetchPaymentCustomFields(
+  supabase: Awaited<ReturnType<typeof getServerSupabase>>,
+): Promise<CustomFieldRow[]> {
+  const { data, error } = await supabase
+    .from('custom_fields')
+    .select(
+      'id, owner_id, entity_type, scope, scope_ref, key, label, description, field_type, options, required, default_value, sequence, show_in_form, show_in_list, show_in_card, archived_at, created_at, updated_at',
+    )
+    .eq('entity_type', 'payment')
+    .is('archived_at', null);
+  if (error) throw error;
+  return (data ?? []) as CustomFieldRow[];
+}
+
+function toJson(value: Record<string, unknown>): Json {
+  return value as unknown as Json;
+}
 
 export type PaymentRow = {
   id: string;
@@ -104,6 +127,18 @@ export async function recordPayment(input: unknown): Promise<ActionResult<Paymen
       );
     }
     const supabase = await getServerSupabase();
+    const fields = await fetchPaymentCustomFields(supabase);
+    const cdRaw =
+      (input as { custom_data?: Record<string, unknown> } | null | undefined)?.custom_data ?? {};
+    const cdResult = buildCustomDataValidator(fields).safeParse(cdRaw);
+    if (!cdResult.success) {
+      throw new ActionError(
+        'validation_error',
+        'Field tambahan tidak valid.',
+        cdResult.error.flatten().fieldErrors as never,
+      );
+    }
+
     const { data, error } = await supabase
       .from('payments')
       .insert({
@@ -116,6 +151,7 @@ export async function recordPayment(input: unknown): Promise<ActionResult<Paymen
         proof_file_id: parsed.data.proof_file_id ?? null,
         notes: parsed.data.notes ?? null,
         verified: parsed.data.verified,
+        custom_data: toJson(cdResult.data),
       })
       .select(COLUMNS)
       .single();
@@ -146,9 +182,25 @@ export async function updatePayment(
       );
     }
     const supabase = await getServerSupabase();
+    const cdRaw = (input as { custom_data?: Record<string, unknown> } | null | undefined)?.custom_data;
+    let custom_data: Json | undefined;
+    if (cdRaw !== undefined) {
+      const fields = await fetchPaymentCustomFields(supabase);
+      const cdResult = buildCustomDataValidator(fields).safeParse(cdRaw);
+      if (!cdResult.success) {
+        throw new ActionError(
+          'validation_error',
+          'Field tambahan tidak valid.',
+          cdResult.error.flatten().fieldErrors as never,
+        );
+      }
+      custom_data = toJson(cdResult.data);
+    }
+    const patch = custom_data !== undefined ? { ...parsed.data, custom_data } : parsed.data;
+
     const { data, error } = await supabase
       .from('payments')
-      .update(parsed.data)
+      .update(patch)
       .eq('id', id)
       .select(COLUMNS)
       .single();

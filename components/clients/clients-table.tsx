@@ -33,12 +33,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ColumnManager, type BuiltinColumnSpec } from '@/components/custom-fields/column-manager';
+import { CustomFieldCell } from '@/components/custom-fields/custom-field-cell';
+import { useColumnVisibility } from '@/hooks/use-column-visibility';
 import { archiveClient, restoreClient, type ClientRow } from '@/lib/actions/clients';
 import { formatTanggal, formatTanggalRelatif } from '@/lib/format';
+import type { CustomFieldRow } from '@/lib/schemas/custom-field';
 import { cn } from '@/lib/utils';
 
 interface ClientsTableProps {
   data: ClientRow[];
+  customFields?: CustomFieldRow[];
 }
 
 type StatusFilter = 'active' | 'archived' | 'all';
@@ -49,14 +54,41 @@ const STATUS_OPTIONS: Array<{ key: StatusFilter; label: string }> = [
   { key: 'all', label: 'Semua' },
 ];
 
-export function ClientsTable({ data }: ClientsTableProps) {
+const BUILTIN_COLUMNS: BuiltinColumnSpec[] = [
+  { key: 'full_name', label: 'Nama', toggleable: false },
+  { key: 'whatsapp', label: 'WhatsApp' },
+  { key: 'university', label: 'Kampus' },
+  { key: 'major', label: 'Jurusan' },
+  { key: 'target_defense', label: 'Target sidang' },
+  { key: 'status', label: 'Status' },
+];
+
+const BUILTIN_DEFAULTS: Record<string, boolean> = Object.fromEntries(
+  BUILTIN_COLUMNS.map((c) => [c.key, true]),
+);
+
+export function ClientsTable({ data, customFields: initialCustomFields = [] }: ClientsTableProps) {
   const [globalFilter, setGlobalFilter] = React.useState('');
-  const [sorting, setSorting] = React.useState<SortingState>([
-    { id: 'target_defense', desc: false },
-  ]);
+  const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('active');
   const [pending, startTransition] = React.useTransition();
+  const [customFields, setCustomFields] = React.useState<CustomFieldRow[]>(initialCustomFields);
+
+  React.useEffect(() => setCustomFields(initialCustomFields), [initialCustomFields]);
+
+  const defaultVisibility = React.useMemo(() => {
+    const map = { ...BUILTIN_DEFAULTS };
+    for (const f of customFields) {
+      if (!f.archived_at) map[`cf:${f.key}`] = f.show_in_list;
+    }
+    return map;
+  }, [customFields]);
+
+  const { visible: columnVisibility, toggle: toggleColumn } = useColumnVisibility(
+    'clients',
+    defaultVisibility,
+  );
 
   const filteredByStatus = React.useMemo(() => {
     if (statusFilter === 'all') return data;
@@ -85,9 +117,12 @@ export function ClientsTable({ data }: ClientsTableProps) {
     });
   };
 
-  const columns = React.useMemo<ColumnDef<ClientRow>[]>(
-    () => [
-      {
+  const columns = React.useMemo<ColumnDef<ClientRow>[]>(() => {
+    const cols: ColumnDef<ClientRow>[] = [];
+
+    if (columnVisibility.full_name !== false) {
+      cols.push({
+        id: 'full_name',
         accessorKey: 'full_name',
         header: 'Nama',
         cell: ({ row }) => (
@@ -105,29 +140,45 @@ export function ClientsTable({ data }: ClientsTableProps) {
             ) : null}
           </div>
         ),
-      },
-      {
+      });
+    }
+
+    if (columnVisibility.whatsapp !== false) {
+      cols.push({
+        id: 'whatsapp',
         accessorKey: 'whatsapp',
         header: 'WhatsApp',
         cell: ({ getValue }) => (
           <span className="font-mono text-xs">{getValue<string>()}</span>
         ),
-      },
-      {
+      });
+    }
+
+    if (columnVisibility.university !== false) {
+      cols.push({
+        id: 'university',
         accessorKey: 'university',
         header: 'Kampus',
         cell: ({ getValue }) => (
           <span className="text-sm">{getValue<string | null>() ?? '—'}</span>
         ),
-      },
-      {
+      });
+    }
+
+    if (columnVisibility.major !== false) {
+      cols.push({
+        id: 'major',
         accessorKey: 'major',
         header: 'Jurusan',
         cell: ({ getValue }) => (
           <span className="text-sm">{getValue<string | null>() ?? '—'}</span>
         ),
-      },
-      {
+      });
+    }
+
+    if (columnVisibility.target_defense !== false) {
+      cols.push({
+        id: 'target_defense',
         accessorKey: 'target_defense',
         header: 'Target sidang',
         sortingFn: 'datetime',
@@ -143,8 +194,25 @@ export function ClientsTable({ data }: ClientsTableProps) {
             </div>
           );
         },
-      },
-      {
+      });
+    }
+
+    // Custom field columns (visible only)
+    for (const f of customFields) {
+      if (f.archived_at) continue;
+      const colKey = `cf:${f.key}`;
+      if (columnVisibility[colKey] === false) continue;
+      cols.push({
+        id: colKey,
+        header: f.label,
+        cell: ({ row }) => (
+          <CustomFieldCell field={f} value={row.original.custom_data?.[f.key]} />
+        ),
+      });
+    }
+
+    if (columnVisibility.status !== false) {
+      cols.push({
         id: 'status',
         header: 'Status',
         cell: ({ row }) =>
@@ -153,58 +221,60 @@ export function ClientsTable({ data }: ClientsTableProps) {
           ) : (
             <Badge tone="brand">Aktif</Badge>
           ),
-      },
-      {
-        id: 'actions',
-        header: '',
-        cell: ({ row }) => (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`Menu untuk ${row.original.full_name}`}
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={`/clients/${row.original.id}`}>
-                  <Search className="h-4 w-4" />
-                  Lihat detail
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/clients/${row.original.id}/edit`}>
-                  <PencilLine className="h-4 w-4" />
-                  Edit
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onSelect={() => handleArchive(row.original)}
-                disabled={pending}
-              >
-                {row.original.archived_at ? (
-                  <>
-                    <ArchiveRestore className="h-4 w-4" />
-                    Pulihkan
-                  </>
-                ) : (
-                  <>
-                    <Archive className="h-4 w-4" />
-                    Arsipkan
-                  </>
-                )}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ),
-      },
-    ],
-    [pending],
-  );
+      });
+    }
+
+    cols.push({
+      id: 'actions',
+      header: '',
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={`Menu untuk ${row.original.full_name}`}
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link href={`/clients/${row.original.id}`}>
+                <Search className="h-4 w-4" />
+                Lihat detail
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/clients/${row.original.id}/edit`}>
+                <PencilLine className="h-4 w-4" />
+                Edit
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onSelect={() => handleArchive(row.original)}
+              disabled={pending}
+            >
+              {row.original.archived_at ? (
+                <>
+                  <ArchiveRestore className="h-4 w-4" />
+                  Pulihkan
+                </>
+              ) : (
+                <>
+                  <Archive className="h-4 w-4" />
+                  Arsipkan
+                </>
+              )}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    });
+
+    return cols;
+  }, [columnVisibility, customFields, pending]);
 
   const table = useReactTable({
     data: filteredByStatus,
@@ -269,12 +339,22 @@ export function ClientsTable({ data }: ClientsTableProps) {
             ))}
           </div>
         </div>
-        <span className="text-xs text-[var(--text-muted)]">
-          {table.getFilteredRowModel().rows.length} klien
-        </span>
+        <div className="flex items-center gap-2">
+          <ColumnManager
+            entityType="client"
+            builtinColumns={BUILTIN_COLUMNS}
+            customFields={customFields}
+            onCustomFieldsChange={setCustomFields}
+            columnVisibility={columnVisibility}
+            onToggleColumn={toggleColumn}
+          />
+          <span className="text-xs text-[var(--text-muted)]">
+            {table.getFilteredRowModel().rows.length} klien
+          </span>
+        </div>
       </div>
 
-      <div className="overflow-hidden rounded-lg border" style={{ borderColor: 'var(--border)' }}>
+      <div className="overflow-x-auto rounded-lg border" style={{ borderColor: 'var(--border)' }}>
         <table className="w-full text-left">
           <thead className="bg-[var(--bg-subtle)] text-xs uppercase text-[var(--text-muted)]">
             {table.getHeaderGroups().map((hg) => (

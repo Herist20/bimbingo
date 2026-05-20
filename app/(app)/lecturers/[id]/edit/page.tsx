@@ -4,6 +4,9 @@ import { ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LecturerForm } from '@/components/lecturers/lecturer-form';
 import { getLecturer } from '@/lib/actions/lecturers';
+import { listCustomFields } from '@/lib/actions/custom-fields';
+
+export const dynamic = 'force-dynamic';
 
 export default async function EditLecturerPage({
   params,
@@ -11,9 +14,13 @@ export default async function EditLecturerPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const result = await getLecturer(id);
+  const [result, cfResult] = await Promise.all([
+    getLecturer(id),
+    listCustomFields('lecturer'),
+  ]);
   if (!result.ok || !result.data) notFound();
   const l = result.data;
+  const customFields = cfResult.ok ? cfResult.data : [];
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -34,6 +41,8 @@ export default async function EditLecturerPage({
           <LecturerForm
             mode="edit"
             lecturerId={id}
+            customFields={customFields}
+            initialCustomData={l.custom_data ?? {}}
             initialValues={{
               full_name: l.full_name,
               title: l.title ?? '',

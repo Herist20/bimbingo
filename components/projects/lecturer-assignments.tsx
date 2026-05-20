@@ -31,6 +31,7 @@ function toLecturerRow(l: ProjectLecturerLink): LecturerRow | null {
     whatsapp: null,
     characteristics: null,
     tags: [],
+    custom_data: {},
     created_at: '',
     updated_at: '',
   };

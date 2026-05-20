@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LecturersTable } from '@/components/lecturers/lecturers-table';
+import { AddFieldButton } from '@/components/custom-fields/add-field-button';
 import { listLecturers } from '@/lib/actions/lecturers';
 
 export const dynamic = 'force-dynamic';
@@ -19,12 +20,15 @@ export default async function LecturersPage() {
             Daftar dosen pembimbing & penguji. Catat karakteristik untuk profiling.
           </p>
         </div>
-        <Button asChild>
-          <Link href="/lecturers/new">
-            <Plus className="h-4 w-4" />
-            Tambah dosen
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <AddFieldButton entityType="lecturer" />
+          <Button asChild>
+            <Link href="/lecturers/new">
+              <Plus className="h-4 w-4" />
+              Tambah dosen
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {!result.ok ? (

@@ -18,16 +18,21 @@ import {
 } from '@/lib/schemas/project';
 import { createProject } from '@/lib/actions/projects';
 import type { ClientRow } from '@/lib/actions/clients';
+import type { CustomFieldRow } from '@/lib/schemas/custom-field';
+import { CustomFieldsSection } from '@/components/custom-fields/custom-fields-section';
 import { cn } from '@/lib/utils';
 
 interface ProjectFormProps {
   initialClient?: ClientRow | null;
+  customFields?: CustomFieldRow[];
 }
 
-export function ProjectForm({ initialClient }: ProjectFormProps) {
+export function ProjectForm({ initialClient, customFields = [] }: ProjectFormProps) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
   const [useDefaults, setUseDefaults] = React.useState(true);
+  const [customData, setCustomData] = React.useState<Record<string, unknown>>({});
+  const [customErrors, setCustomErrors] = React.useState<Record<string, string>>({});
 
   const form = useForm<ProjectCreateInput>({
     resolver: zodResolver(ProjectCreateSchema),
@@ -46,22 +51,30 @@ export function ProjectForm({ initialClient }: ProjectFormProps) {
   });
 
   const onSubmit = form.handleSubmit((values) => {
+    setCustomErrors({});
     startTransition(async () => {
-      const payload: ProjectCreateInput = {
+      const payload = {
         ...values,
         milestones: useDefaults ? DEFAULT_MILESTONES : [],
+        custom_data: customData,
       };
       const result = await createProject(payload);
       if (!result.ok) {
         if (result.error.fields) {
+          const cfKeys = new Set(customFields.map((f) => f.key));
+          const cfErrs: Record<string, string> = {};
           for (const [k, msgs] of Object.entries(result.error.fields)) {
-            if (msgs?.[0]) {
+            if (!msgs?.[0]) continue;
+            if (cfKeys.has(k)) {
+              cfErrs[k] = msgs[0];
+            } else {
               form.setError(k as keyof ProjectCreateInput, {
                 type: 'server',
                 message: msgs[0],
               });
             }
           }
+          if (Object.keys(cfErrs).length) setCustomErrors(cfErrs);
         }
         toast.error(result.error.message);
         return;
@@ -179,6 +192,15 @@ export function ProjectForm({ initialClient }: ProjectFormProps) {
         />
         Buat default 6 bab (Bab 1-5 + Sidang)
       </label>
+
+      {customFields.length > 0 ? (
+        <CustomFieldsSection
+          fields={customFields}
+          values={customData}
+          onChange={setCustomData}
+          errors={customErrors}
+        />
+      ) : null}
 
       <div
         className="flex justify-end gap-2 border-t pt-4"

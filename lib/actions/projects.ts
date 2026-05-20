@@ -9,7 +9,30 @@ import {
   ProjectUpdateSchema,
   PROJECT_STATUSES,
 } from '@/lib/schemas/project';
+import {
+  buildCustomDataValidator,
+  type CustomFieldRow,
+} from '@/lib/schemas/custom-field';
+import type { Json } from '@/types/database';
 import { ActionError, fail, ok, requireUser, type ActionResult } from './_helper';
+
+async function fetchProjectCustomFields(
+  supabase: Awaited<ReturnType<typeof getServerSupabase>>,
+): Promise<CustomFieldRow[]> {
+  const { data, error } = await supabase
+    .from('custom_fields')
+    .select(
+      'id, owner_id, entity_type, scope, scope_ref, key, label, description, field_type, options, required, default_value, sequence, show_in_form, show_in_list, show_in_card, archived_at, created_at, updated_at',
+    )
+    .eq('entity_type', 'project')
+    .is('archived_at', null);
+  if (error) throw error;
+  return (data ?? []) as CustomFieldRow[];
+}
+
+function toJson(value: Record<string, unknown>): Json {
+  return value as unknown as Json;
+}
 
 export type ProjectRow = {
   id: string;
@@ -23,6 +46,7 @@ export type ProjectRow = {
   target_end_date: string | null;
   actual_end_date: string | null;
   archived_at: string | null;
+  custom_data: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 };
@@ -58,7 +82,7 @@ export type ProjectLecturerLink = {
 };
 
 const PROJECT_COLUMNS =
-  'id, client_id, title, type, description, status, total_value, start_date, target_end_date, actual_end_date, archived_at, created_at, updated_at';
+  'id, client_id, title, type, description, status, total_value, start_date, target_end_date, actual_end_date, archived_at, custom_data, created_at, updated_at';
 
 export async function listProjects(opts?: {
   includeArchived?: boolean;
@@ -118,6 +142,7 @@ export async function listProjects(opts?: {
         target_end_date: p.target_end_date,
         actual_end_date: p.actual_end_date,
         archived_at: p.archived_at,
+        custom_data: (p.custom_data as Record<string, unknown> | null) ?? {},
         created_at: p.created_at,
         updated_at: p.updated_at,
         client_name: client?.full_name ?? '—',
@@ -201,6 +226,7 @@ export async function getProject(id: string): Promise<
         target_end_date: project.target_end_date,
         actual_end_date: project.actual_end_date,
         archived_at: project.archived_at,
+        custom_data: (project.custom_data as Record<string, unknown> | null) ?? {},
         created_at: project.created_at,
         updated_at: project.updated_at,
         client: clientRaw,
@@ -235,6 +261,18 @@ export async function createProject(input: unknown): Promise<ActionResult<{ id: 
     const { milestones, lecturers, client_id, ...rest } = parsed.data;
     const supabase = await getServerSupabase();
 
+    const fields = await fetchProjectCustomFields(supabase);
+    const cdRaw =
+      (input as { custom_data?: Record<string, unknown> } | null | undefined)?.custom_data ?? {};
+    const cdResult = buildCustomDataValidator(fields).safeParse(cdRaw);
+    if (!cdResult.success) {
+      throw new ActionError(
+        'validation_error',
+        'Field tambahan tidak valid.',
+        cdResult.error.flatten().fieldErrors as never,
+      );
+    }
+
     const { data: inserted, error: insertError } = await supabase
       .from('projects')
       .insert({
@@ -242,6 +280,7 @@ export async function createProject(input: unknown): Promise<ActionResult<{ id: 
         client_id,
         owner_id: user.id,
         status: 'active',
+        custom_data: toJson(cdResult.data),
       })
       .select('id')
       .single();
@@ -321,7 +360,24 @@ export async function updateProject(
     }
     const { milestones, lecturers, ...rest } = parsed.data;
     const supabase = await getServerSupabase();
-    const { error } = await supabase.from('projects').update(rest).eq('id', id);
+
+    const cdRaw = (input as { custom_data?: Record<string, unknown> } | null | undefined)?.custom_data;
+    let custom_data: Json | undefined;
+    if (cdRaw !== undefined) {
+      const fields = await fetchProjectCustomFields(supabase);
+      const cdResult = buildCustomDataValidator(fields).safeParse(cdRaw);
+      if (!cdResult.success) {
+        throw new ActionError(
+          'validation_error',
+          'Field tambahan tidak valid.',
+          cdResult.error.flatten().fieldErrors as never,
+        );
+      }
+      custom_data = toJson(cdResult.data);
+    }
+    const patch = custom_data !== undefined ? { ...rest, custom_data } : rest;
+
+    const { error } = await supabase.from('projects').update(patch).eq('id', id);
     if (error) throw error;
 
     revalidatePath('/projects');
