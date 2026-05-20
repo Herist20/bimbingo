@@ -8,11 +8,13 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field } from '@/components/ui/field';
+import { CustomFieldsSection } from '@/components/custom-fields/custom-fields-section';
 import {
   CLIENT_FORM_DEFAULTS,
   ClientCreateSchema,
   type ClientCreateInput,
 } from '@/lib/schemas/client';
+import type { CustomFieldRow } from '@/lib/schemas/custom-field';
 import { createClient, updateClient } from '@/lib/actions/clients';
 import { cn } from '@/lib/utils';
 
@@ -20,11 +22,21 @@ interface ClientFormProps {
   mode: 'create' | 'edit';
   clientId?: string;
   initialValues?: Partial<ClientCreateInput>;
+  customFields?: CustomFieldRow[];
+  initialCustomData?: Record<string, unknown>;
 }
 
-export function ClientForm({ mode, clientId, initialValues }: ClientFormProps) {
+export function ClientForm({
+  mode,
+  clientId,
+  initialValues,
+  customFields = [],
+  initialCustomData = {},
+}: ClientFormProps) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
+  const [customData, setCustomData] = React.useState<Record<string, unknown>>(initialCustomData);
+  const [customErrors, setCustomErrors] = React.useState<Record<string, string>>({});
 
   const form = useForm<ClientCreateInput>({
     resolver: zodResolver(ClientCreateSchema),
@@ -33,22 +45,30 @@ export function ClientForm({ mode, clientId, initialValues }: ClientFormProps) {
   });
 
   const onSubmit = form.handleSubmit((values) => {
+    setCustomErrors({});
     startTransition(async () => {
+      const payload = { ...values, custom_data: customData };
       const result =
         mode === 'create'
-          ? await createClient(values)
-          : await updateClient(clientId!, values);
+          ? await createClient(payload)
+          : await updateClient(clientId!, payload);
 
       if (!result.ok) {
         if (result.error.fields) {
+          const cfKeys = new Set(customFields.map((f) => f.key));
+          const cfErrs: Record<string, string> = {};
           for (const [key, msgs] of Object.entries(result.error.fields)) {
-            if (msgs?.[0]) {
+            if (!msgs?.[0]) continue;
+            if (cfKeys.has(key)) {
+              cfErrs[key] = msgs[0];
+            } else {
               form.setError(key as keyof ClientCreateInput, {
                 type: 'server',
                 message: msgs[0],
               });
             }
           }
+          if (Object.keys(cfErrs).length) setCustomErrors(cfErrs);
         }
         toast.error(result.error.message);
         return;
@@ -196,6 +216,15 @@ export function ClientForm({ mode, clientId, initialValues }: ClientFormProps) {
           {...form.register('notes')}
         />
       </Field>
+
+      {customFields.length > 0 ? (
+        <CustomFieldsSection
+          fields={customFields}
+          values={customData}
+          onChange={setCustomData}
+          errors={customErrors}
+        />
+      ) : null}
 
       <div className="flex justify-end gap-2 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
         <Button

@@ -4,6 +4,9 @@ import { ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClientForm } from '@/components/clients/client-form';
 import { getClient } from '@/lib/actions/clients';
+import { listCustomFields } from '@/lib/actions/custom-fields';
+
+export const dynamic = 'force-dynamic';
 
 export default async function EditClientPage({
   params,
@@ -11,10 +14,14 @@ export default async function EditClientPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const result = await getClient(id);
+  const [result, cfResult] = await Promise.all([
+    getClient(id),
+    listCustomFields('client'),
+  ]);
   if (!result.ok || !result.data) notFound();
 
   const c = result.data;
+  const customFields = cfResult.ok ? cfResult.data : [];
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -35,6 +42,8 @@ export default async function EditClientPage({
           <ClientForm
             mode="edit"
             clientId={id}
+            customFields={customFields}
+            initialCustomData={c.custom_data ?? {}}
             initialValues={{
               full_name: c.full_name,
               nickname: c.nickname ?? '',

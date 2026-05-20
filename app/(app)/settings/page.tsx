@@ -23,6 +23,17 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </Link>
+        <Link href="/settings/custom-fields" className="block">
+          <Card className="transition-colors hover:bg-[var(--bg-muted)]">
+            <CardHeader>
+              <CardTitle>Custom Fields</CardTitle>
+              <CardDescription>Tambah kolom data sendiri per entitas.</CardDescription>
+            </CardHeader>
+            <CardContent className="text-sm text-[var(--text-secondary)]">
+              Mirip Jira / ClickUp / Notion. Tambah field text, angka, pilihan, dll.
+            </CardContent>
+          </Card>
+        </Link>
         <Card>
           <CardHeader>
             <CardTitle>Tema</CardTitle>

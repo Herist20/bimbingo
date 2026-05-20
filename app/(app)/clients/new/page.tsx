@@ -2,8 +2,14 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClientForm } from '@/components/clients/client-form';
+import { listCustomFields } from '@/lib/actions/custom-fields';
 
-export default function NewClientPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function NewClientPage() {
+  const cfResult = await listCustomFields('client');
+  const customFields = cfResult.ok ? cfResult.data : [];
+
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <Link
@@ -23,7 +29,7 @@ export default function NewClientPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ClientForm mode="create" />
+          <ClientForm mode="create" customFields={customFields} />
         </CardContent>
       </Card>
     </div>
