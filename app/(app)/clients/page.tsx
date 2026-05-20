@@ -8,7 +8,7 @@ import { listClients } from '@/lib/actions/clients';
 export const dynamic = 'force-dynamic';
 
 export default async function ClientsPage() {
-  const result = await listClients();
+  const result = await listClients({ includeArchived: true });
 
   return (
     <div className="flex flex-col gap-6">

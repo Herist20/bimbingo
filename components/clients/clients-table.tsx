@@ -41,13 +41,37 @@ interface ClientsTableProps {
   data: ClientRow[];
 }
 
+type StatusFilter = 'active' | 'archived' | 'all';
+
+const STATUS_OPTIONS: Array<{ key: StatusFilter; label: string }> = [
+  { key: 'active', label: 'Aktif' },
+  { key: 'archived', label: 'Arsip' },
+  { key: 'all', label: 'Semua' },
+];
+
 export function ClientsTable({ data }: ClientsTableProps) {
   const [globalFilter, setGlobalFilter] = React.useState('');
   const [sorting, setSorting] = React.useState<SortingState>([
     { id: 'target_defense', desc: false },
   ]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('active');
   const [pending, startTransition] = React.useTransition();
+
+  const filteredByStatus = React.useMemo(() => {
+    if (statusFilter === 'all') return data;
+    if (statusFilter === 'archived') return data.filter((c) => c.archived_at !== null);
+    return data.filter((c) => c.archived_at === null);
+  }, [data, statusFilter]);
+
+  const counts = React.useMemo(
+    () => ({
+      active: data.filter((c) => c.archived_at === null).length,
+      archived: data.filter((c) => c.archived_at !== null).length,
+      all: data.length,
+    }),
+    [data],
+  );
 
   const handleArchive = (row: ClientRow) => {
     startTransition(async () => {
@@ -183,7 +207,7 @@ export function ClientsTable({ data }: ClientsTableProps) {
   );
 
   const table = useReactTable({
-    data,
+    data: filteredByStatus,
     columns,
     state: { globalFilter, sorting, columnFilters },
     onGlobalFilterChange: setGlobalFilter,
@@ -207,14 +231,43 @@ export function ClientsTable({ data }: ClientsTableProps) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
-          <Input
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            placeholder="Cari nama / WA / kampus…"
-            className="pl-8"
-          />
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
+            <Input
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              placeholder="Cari nama / WA / kampus…"
+              className="pl-8"
+            />
+          </div>
+          <div
+            role="tablist"
+            aria-label="Filter status klien"
+            className="inline-flex rounded-md border p-0.5"
+            style={{ borderColor: 'var(--border-strong)' }}
+          >
+            {STATUS_OPTIONS.map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                role="tab"
+                aria-selected={statusFilter === opt.key}
+                onClick={() => setStatusFilter(opt.key)}
+                className={cn(
+                  'rounded-sm px-2.5 py-1 text-xs font-medium transition-colors',
+                  statusFilter === opt.key
+                    ? 'bg-[var(--brand-soft)] text-[var(--brand)]'
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-muted)]',
+                )}
+              >
+                {opt.label}
+                <span className="ml-1 text-[10px] text-[var(--text-muted)]">
+                  {counts[opt.key]}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
         <span className="text-xs text-[var(--text-muted)]">
           {table.getFilteredRowModel().rows.length} klien
