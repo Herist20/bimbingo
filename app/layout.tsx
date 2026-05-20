@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { Toaster } from '@/components/ui/toaster';
+import { ThemeProvider } from '@/components/shared/theme-provider';
 import './globals.css';
 
 const inter = Inter({
@@ -40,9 +41,31 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+    <html
+      lang="id"
+      suppressHydrationWarning
+      className={`${inter.variable} ${jetbrainsMono.variable}`}
+    >
+      <head>
+        {/* Anti-flash: set data-theme sebelum React hydrate */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var stored = localStorage.getItem('bimbingo:theme');
+                  var pref = stored && stored !== 'system' ? stored
+                    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                  document.documentElement.dataset.theme = pref;
+                  document.documentElement.style.colorScheme = pref;
+                } catch (_) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body>
-        {children}
+        <ThemeProvider>{children}</ThemeProvider>
         <Toaster />
       </body>
     </html>

@@ -31,19 +31,17 @@
     --radius-lg: 0.75rem;
   }
 
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg-base: oklch(0.15 0.01 250);
-      --bg-subtle: oklch(0.18 0.01 250);
-      --bg-muted: oklch(0.22 0.01 250);
-      --border: oklch(0.28 0.01 250);
-      --border-strong: oklch(0.36 0.01 250);
-      --text-primary: oklch(0.95 0.005 250);
-      --text-secondary: oklch(0.75 0.005 250);
-      --text-muted: oklch(0.55 0.005 250);
-      --brand: oklch(0.7 0.17 270);
-      --brand-soft: oklch(0.3 0.05 270);
-    }
+  :root[data-theme='dark'] {
+    --bg-base: oklch(0.15 0.01 250);
+    --bg-subtle: oklch(0.18 0.01 250);
+    --bg-muted: oklch(0.22 0.01 250);
+    --border: oklch(0.28 0.01 250);
+    --border-strong: oklch(0.36 0.01 250);
+    --text-primary: oklch(0.95 0.005 250);
+    --text-secondary: oklch(0.75 0.005 250);
+    --text-muted: oklch(0.55 0.005 250);
+    --brand: oklch(0.7 0.17 270);
+    --brand-soft: oklch(0.3 0.05 270);
   }
 
   html {
