@@ -32,9 +32,9 @@ interface ProjectsTableProps {
 
 export function ProjectsTable({ data }: ProjectsTableProps) {
   const [globalFilter, setGlobalFilter] = React.useState('');
-  const [sorting, setSorting] = React.useState<SortingState>([
-    { id: 'updated_at', desc: true },
-  ]);
+  // Data sudah disort server-side (updated_at desc). Biarkan kosong supaya
+  // urutan default = urutan server, lalu user bisa override per kolom.
+  const [sorting, setSorting] = React.useState<SortingState>([]);
 
   const columns = React.useMemo<ColumnDef<ProjectListRow>[]>(
     () => [
