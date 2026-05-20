@@ -1,4 +1,4 @@
-﻿# Monetization & Scalability — Bimbingo
+# Monetization & Scalability — Bimbingo
 
 ---
 

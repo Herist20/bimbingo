@@ -1,4 +1,4 @@
-﻿# Implementation Roadmap — Bimbingo
+# Implementation Roadmap — Bimbingo
 
 > **Untuk engineer yang akan eksekusi:** Setiap minggu dipecah ke task harian dengan deliverable jelas + commit boundary. Bekerja dengan disiplin TDD ringan: tulis test untuk validasi & server action bisnis, smoke-test e2e untuk happy path.
 

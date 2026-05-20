@@ -1,4 +1,4 @@
-﻿# PRD — Bimbingo
+# PRD — Bimbingo
 
 **Versi:** 1.0
 **Tanggal:** 2026-05-20

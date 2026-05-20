@@ -1,4 +1,4 @@
-﻿# API Spec — Bimbingo
+# API Spec — Bimbingo
 
 > MVP menggunakan **Server Actions** (`'use server'`) — bukan REST API publik. Dokumen ini mendefinisikan kontrak input/output setiap action supaya FE & BE konsisten. REST/JSON API akan ditambah di fase 2 saat ada client portal / mobile app.
 

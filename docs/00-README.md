@@ -1,4 +1,4 @@
-﻿# Bimbingo — Dokumentasi Proyek
+# Bimbingo — Dokumentasi Proyek
 
 > Sistem manajemen task & operasional untuk layanan pendampingan / joki skripsi.
 > Stack: **Next.js 16 (App Router) + Supabase + Tailwind CSS + shadcn/ui + Vercel**.

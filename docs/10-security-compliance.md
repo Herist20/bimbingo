@@ -1,4 +1,4 @@
-﻿# Security & Compliance — Bimbingo
+# Security & Compliance — Bimbingo
 
 ---
 

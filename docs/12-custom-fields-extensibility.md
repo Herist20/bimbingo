@@ -1,4 +1,4 @@
-﻿# Custom Fields & Extensibility — Bimbingo
+# Custom Fields & Extensibility — Bimbingo
 
 > **Tambahan PRD (revisi G3 + permintaan owner).** Sistem mendukung **custom field per entitas** (mirip Jira / ClickUp / Notion) sehingga admin dapat menambah kolom data tanpa migrasi schema.
 

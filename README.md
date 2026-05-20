@@ -1,4 +1,4 @@
-﻿# Bimbingo
+# Bimbingo
 
 Sistem manajemen task & operasional untuk layanan pendampingan / joki skripsi. Stack:
 **Next.js 16 + Supabase + Tailwind CSS v4 + shadcn/ui + Vercel.**

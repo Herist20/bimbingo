@@ -1,4 +1,4 @@
-﻿# Konfigurasi Supabase CLI untuk Bimbingo.
+# Konfigurasi Supabase CLI untuk Bimbingo.
 # Generate via `pnpm supabase init`, kemudian sesuaikan.
 
 project_id = "bimbingo"

@@ -1,4 +1,4 @@
-﻿# Spesifikasi Fitur — Bimbingo
+# Spesifikasi Fitur — Bimbingo
 
 Setiap fitur ditulis dengan format:
 - **Tujuan**

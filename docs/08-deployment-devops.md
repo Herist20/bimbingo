@@ -1,4 +1,4 @@
-﻿# Deployment & DevOps — Bimbingo
+# Deployment & DevOps — Bimbingo
 
 ---
 

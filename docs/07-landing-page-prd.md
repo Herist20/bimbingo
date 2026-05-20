@@ -1,4 +1,4 @@
-﻿# PRD — Landing Page
+# PRD — Landing Page
 
 **Versi:** 1.0
 **Tanggal:** 2026-05-20

@@ -1,4 +1,4 @@
-﻿# UI / UX Design — Bimbingo
+# UI / UX Design — Bimbingo
 
 ---
 
