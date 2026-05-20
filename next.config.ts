@@ -3,9 +3,9 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  experimental: {
-    typedRoutes: true,
-  },
+  // typedRoutes diaktifkan ulang setelah semua route (clients/projects/dst)
+  // ter-implementasi pada Minggu 2-3 roadmap.
+  typedRoutes: false,
   images: {
     remotePatterns: [
       {
