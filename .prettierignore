@@ -1,0 +1,10 @@
+.next
+node_modules
+pnpm-lock.yaml
+.vercel
+.contentlayer
+public
+coverage
+test-results
+playwright-report
+types/database.ts
