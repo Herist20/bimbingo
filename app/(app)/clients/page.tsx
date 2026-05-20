@@ -1,20 +1,57 @@
+import Link from 'next/link';
+import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ClientsTable } from '@/components/clients/clients-table';
+import { listClients } from '@/lib/actions/clients';
 
-export default function ClientsPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function ClientsPage() {
+  const result = await listClients();
+
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Klien</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle>Belum ada klien</CardTitle>
-          <CardDescription>
-            Halaman CRUD klien akan dibangun pada Hari 6-7 roadmap (Minggu 2).
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="text-sm text-[var(--text-secondary)]">
-          Lihat <code>docs/06-implementation-roadmap.md</code> untuk detail.
-        </CardContent>
-      </Card>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Klien</h1>
+          <p className="text-sm text-[var(--text-secondary)]">
+            Kelola data mahasiswa yang sedang didampingi.
+          </p>
+        </div>
+        <Button asChild>
+          <Link href="/clients/new">
+            <Plus className="h-4 w-4" />
+            Tambah klien
+          </Link>
+        </Button>
+      </div>
+
+      {!result.ok ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Gagal memuat klien</CardTitle>
+            <CardDescription>{result.error.message}</CardDescription>
+          </CardHeader>
+        </Card>
+      ) : result.data.length === 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Belum ada klien</CardTitle>
+            <CardDescription>Mulai dengan menambah klien pertama Anda.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild>
+              <Link href="/clients/new">
+                <Plus className="h-4 w-4" />
+                Tambah klien pertama
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <ClientsTable data={result.data} />
+      )}
     </div>
   );
 }
