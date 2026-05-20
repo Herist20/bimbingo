@@ -26,7 +26,7 @@ export async function signInWithPassword(input: unknown): Promise<ActionResult<{
     }
 
     revalidatePath('/', 'layout');
-    return ok({ redirectTo: '/' });
+    return ok({ redirectTo: '/dashboard' });
   } catch (e) {
     return fail(e);
   }

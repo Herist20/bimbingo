@@ -15,8 +15,7 @@ export function SidebarNav({ onNavigate }: SidebarNavProps) {
   return (
     <nav className="flex flex-col gap-0.5">
       {NAV_ITEMS.map((item) => {
-        const active =
-          item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
+        const active = pathname === item.href || pathname.startsWith(item.href + '/');
         const Icon = item.icon;
         return (
           <Link

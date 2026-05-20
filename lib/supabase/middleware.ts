@@ -2,12 +2,23 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import type { Database } from '@/types/database';
 
-// Allowlist: route yang tidak butuh auth.
-// Semua route lain (termasuk `/`) protected secara default.
-const PUBLIC_PATHS = ['/login', '/auth/callback', '/auth/sign-out', '/api/health'];
+/**
+ * Route yang membutuhkan login. Default = publik (landing/marketing).
+ * Tambahkan prefix baru saat membuat area private (mis. '/billing').
+ */
+const PROTECTED_PREFIXES = [
+  '/dashboard',
+  '/clients',
+  '/projects',
+  '/lecturers',
+  '/finance',
+  '/settings',
+];
 
-function isPublic(pathname: string) {
-  return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'));
+function isProtected(pathname: string) {
+  return PROTECTED_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(p + '/'),
+  );
 }
 
 export async function updateSession(request: NextRequest) {
@@ -39,20 +50,19 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const publicRoute = isPublic(pathname);
 
-  // Belum login & route privat -> ke /login
-  if (!user && !publicRoute) {
+  // Privat & belum login -> ke /login
+  if (!user && isProtected(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('next', pathname);
     return NextResponse.redirect(url);
   }
 
-  // Sudah login & coba akses /login -> redirect ke dashboard
+  // Sudah login & akses /login -> langsung ke dashboard
   if (user && pathname === '/login') {
     const url = request.nextUrl.clone();
-    url.pathname = '/';
+    url.pathname = '/dashboard';
     return NextResponse.redirect(url);
   }
 

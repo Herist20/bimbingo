@@ -11,7 +11,7 @@ export function Sidebar() {
       }}
     >
       <Link
-        href="/"
+        href="/dashboard"
         className="mb-6 flex items-center gap-2 px-2 text-sm font-semibold tracking-tight"
       >
         <span className="h-6 w-6 rounded-md bg-[var(--brand)]" aria-hidden />
