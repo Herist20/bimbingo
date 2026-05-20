@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, PencilLine } from 'lucide-react';
+import { ArrowLeft, KanbanSquare, PencilLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -47,12 +47,20 @@ export default async function ProjectDetailPage({
             ) : null}
           </div>
         </div>
-        <Button asChild variant="secondary">
-          <Link href={`/projects/${project.id}/edit`}>
-            <PencilLine className="h-4 w-4" />
-            Edit
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild>
+            <Link href={`/projects/${project.id}/board`}>
+              <KanbanSquare className="h-4 w-4" />
+              Board task
+            </Link>
+          </Button>
+          <Button asChild variant="secondary">
+            <Link href={`/projects/${project.id}/edit`}>
+              <PencilLine className="h-4 w-4" />
+              Edit
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
