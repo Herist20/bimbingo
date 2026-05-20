@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, FolderOpen, KanbanSquare, PencilLine } from 'lucide-react';
+import { ArrowLeft, CreditCard, FolderOpen, KanbanSquare, PencilLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -58,6 +58,12 @@ export default async function ProjectDetailPage({
             <Link href={`/projects/${project.id}/files`}>
               <FolderOpen className="h-4 w-4" />
               File
+            </Link>
+          </Button>
+          <Button asChild variant="secondary">
+            <Link href={`/projects/${project.id}/finance`}>
+              <CreditCard className="h-4 w-4" />
+              Finance
             </Link>
           </Button>
           <Button asChild variant="secondary">
