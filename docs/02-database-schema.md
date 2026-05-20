@@ -1,4 +1,4 @@
-# Skema Database — Joki Portal
+﻿# Skema Database — Bimbingo
 
 **Database:** PostgreSQL 15 (via Supabase)
 **Region target:** `ap-southeast-1` (Singapore)

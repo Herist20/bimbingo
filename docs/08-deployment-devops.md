@@ -1,4 +1,4 @@
-# Deployment & DevOps — Joki Portal
+﻿# Deployment & DevOps — Bimbingo
 
 ---
 
@@ -8,7 +8,7 @@
 |-----|------------|-----|----------|
 | **Development** | feature branches | `http://localhost:3000` | Supabase project (linked) atau `supabase start` lokal |
 | **Preview** | PR ke `main` | URL otomatis Vercel `*.vercel.app` | Supabase project yang sama (atau Branch via Supabase Branches) |
-| **Production** | `main` | `joki-portal.vercel.app` atau domain custom | Supabase project (Singapore) |
+| **Production** | `main` | `bimbingo.vercel.app` atau domain custom | Supabase project (Singapore) |
 
 ---
 
@@ -174,7 +174,7 @@ Tambah ke script `package.json`:
 ```bash
 # Tambahkan ke crontab atau Windows Task Scheduler
 # 02:00 setiap Senin
-0 2 * * 1 pg_dump $SUPABASE_DB_URL | gzip > ~/joki-portal-backups/$(date +\%Y-\%m-\%d).sql.gz
+0 2 * * 1 pg_dump $SUPABASE_DB_URL | gzip > ~/bimbingo-backups/$(date +\%Y-\%m-\%d).sql.gz
 ```
 
 Atau pakai GitHub Actions terjadwal yang dump ke GitHub artifact (free).

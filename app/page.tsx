@@ -1,4 +1,4 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 
 export default function HomePage() {
   return (
@@ -10,7 +10,7 @@ export default function HomePage() {
         scaffold v0.1
       </p>
 
-      <h1 className="text-4xl font-bold tracking-tight md:text-5xl">Joki Portal</h1>
+      <h1 className="text-4xl font-bold tracking-tight md:text-5xl">Bimbingo</h1>
 
       <p className="max-w-lg text-base" style={{ color: 'var(--text-secondary)' }}>
         Ruang kerja terpusat untuk pelaku jasa pendampingan skripsi — tracking klien,

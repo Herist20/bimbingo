@@ -1,4 +1,4 @@
-export default function DashboardLayout({
+﻿export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -9,7 +9,7 @@ export default function DashboardLayout({
         className="hidden border-r p-4 lg:block"
         style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-subtle)' }}
       >
-        <div className="mb-6 text-sm font-semibold">Joki Portal</div>
+        <div className="mb-6 text-sm font-semibold">Bimbingo</div>
         <nav className="space-y-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
           <div>Dashboard</div>
           <div>Klien</div>

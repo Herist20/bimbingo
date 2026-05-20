@@ -1,4 +1,4 @@
-# PRD — Landing Page
+﻿# PRD — Landing Page
 
 **Versi:** 1.0
 **Tanggal:** 2026-05-20
@@ -150,7 +150,7 @@ Aset:
 
 | Element | Implementasi |
 |---------|--------------|
-| Title | "Pendampingan Skripsi Profesional & Tertata \| Joki Portal" (≤ 60 char) |
+| Title | "Pendampingan Skripsi Profesional & Tertata \| Bimbingo" (≤ 60 char) |
 | Description | "Layanan pendampingan skripsi dengan workflow terstruktur, progres real-time, dan revisi sampai ACC. Konsultasi gratis via WhatsApp." (≤ 155 char) |
 | Heading | Single `<h1>` di hero, `<h2>` untuk setiap section |
 | Schema.org | `Organization` + `Service` + `FAQPage` JSON-LD |

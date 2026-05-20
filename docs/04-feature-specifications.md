@@ -1,4 +1,4 @@
-# Spesifikasi Fitur — Joki Portal
+﻿# Spesifikasi Fitur — Bimbingo
 
 Setiap fitur ditulis dengan format:
 - **Tujuan**

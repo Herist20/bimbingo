@@ -1,4 +1,4 @@
-# Joki Portal
+﻿# Bimbingo
 
 Sistem manajemen task & operasional untuk layanan pendampingan / joki skripsi. Stack:
 **Next.js 16 + Supabase + Tailwind CSS v4 + shadcn/ui + Vercel.**
@@ -59,7 +59,7 @@ pnpm dev
 ## Struktur Folder
 
 ```
-joki-portal/
+bimbingo/
 ├── app/                # Next.js App Router
 ├── components/         # UI components (akan diisi sesuai roadmap)
 ├── lib/

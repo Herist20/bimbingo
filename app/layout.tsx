@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from 'next';
+﻿import type { Metadata, Viewport } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
@@ -17,12 +17,12 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Joki Portal — Manajemen Pendampingan Skripsi',
-    template: '%s · Joki Portal',
+    default: 'Bimbingo — Manajemen Pendampingan Skripsi',
+    template: '%s · Bimbingo',
   },
   description:
     'Sistem manajemen pendampingan skripsi terpusat: tracking klien, progres bab, pembayaran, dan dokumen.',
-  applicationName: 'Joki Portal',
+  applicationName: 'Bimbingo',
 };
 
 export const viewport: Viewport = {

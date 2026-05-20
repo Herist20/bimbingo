@@ -1,4 +1,4 @@
-import {
+﻿import {
   Card,
   CardContent,
   CardDescription,
@@ -15,7 +15,7 @@ export default function LoginPage({
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Masuk ke Joki Portal</CardTitle>
+        <CardTitle>Masuk ke Bimbingo</CardTitle>
         <CardDescription>
           Gunakan email & password admin Anda, atau minta tautan masuk lewat email.
         </CardDescription>

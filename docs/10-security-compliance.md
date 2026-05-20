@@ -1,4 +1,4 @@
-# Security & Compliance — Joki Portal
+﻿# Security & Compliance — Bimbingo
 
 ---
 

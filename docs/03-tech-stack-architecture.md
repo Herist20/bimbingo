@@ -1,4 +1,4 @@
-# Tech Stack & Arsitektur — Joki Portal
+﻿# Tech Stack & Arsitektur — Bimbingo
 
 ---
 
@@ -118,7 +118,7 @@ Hasilnya: Next.js + Supabase + Vercel — tiga produk yang saling melengkapi dan
 ## 4. Struktur Folder
 
 ```
-joki-portal/
+bimbingo/
 ├── app/
 │   ├── (auth)/
 │   │   ├── login/page.tsx

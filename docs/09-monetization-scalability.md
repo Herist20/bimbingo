@@ -1,4 +1,4 @@
-# Monetization & Scalability — Joki Portal
+﻿# Monetization & Scalability — Bimbingo
 
 ---
 

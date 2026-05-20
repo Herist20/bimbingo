@@ -1,4 +1,4 @@
-# UI / UX Design — Joki Portal
+﻿# UI / UX Design — Bimbingo
 
 ---
 
@@ -16,7 +16,7 @@
 
 | Aspek | Pilihan |
 |-------|---------|
-| Nama (sementara) | Joki Portal |
+| Nama (sementara) | Bimbingo |
 | Tone | Profesional tapi hangat. Tidak kaku, tidak gaul. |
 | Bahasa UI | Bahasa Indonesia natural ("Tambah Klien", bukan "Buat Klien Baru" yang kepanjangan) |
 | Sentence case | "Tambah klien" bukan "Tambah Klien" untuk action buttons (sentence case, satu kapital di awal) |
@@ -299,7 +299,7 @@ Kanban di < `lg` otomatis switch ke tampilan list dengan filter status (lebih er
 
 ## 12. Asset & Iconography
 
-- **Logo placeholder:** wordmark "Joki Portal" font Inter weight 700, warna `var(--brand)`. Final logo bisa dibuat di Canva (template wordmark).
+- **Logo placeholder:** wordmark "Bimbingo" font Inter weight 700, warna `var(--brand)`. Final logo bisa dibuat di Canva (template wordmark).
 - **Favicon:** generate dari logo via realfavicongenerator.net.
 - **Empty state illustration:** pakai dari unDraw (free, customizable color).
 - **OG image landing:** generate via `og:image` (built-in Next.js).

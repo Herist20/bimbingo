@@ -1,4 +1,4 @@
-# Joki Portal — Dokumentasi Proyek
+﻿# Bimbingo — Dokumentasi Proyek
 
 > Sistem manajemen task & operasional untuk layanan pendampingan / joki skripsi.
 > Stack: **Next.js 16 (App Router) + Supabase + Tailwind CSS + shadcn/ui + Vercel**.
@@ -66,8 +66,8 @@ Charts    : Recharts (untuk dashboard finansial)
 
 ```bash
 # 1. Clone & install
-git clone <repo-url> joki-portal
-cd joki-portal
+git clone <repo-url> bimbingo
+cd bimbingo
 pnpm install
 
 # 2. Setup env (lihat 08-deployment-devops.md)

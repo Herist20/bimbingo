@@ -1,4 +1,4 @@
-# Implementation Roadmap — Joki Portal
+﻿# Implementation Roadmap — Bimbingo
 
 > **Untuk engineer yang akan eksekusi:** Setiap minggu dipecah ke task harian dengan deliverable jelas + commit boundary. Bekerja dengan disiplin TDD ringan: tulis test untuk validasi & server action bisnis, smoke-test e2e untuk happy path.
 
@@ -23,8 +23,8 @@
 ## Minggu 1 — Bootstrap & Foundation
 
 ### Hari 1 — Repo + Supabase project
-- [ ] Buat repo GitHub privat `joki-portal`.
-- [ ] `pnpm create next-app@latest joki-portal --typescript --tailwind --app --eslint --src-dir=false`.
+- [ ] Buat repo GitHub privat `bimbingo`.
+- [ ] `pnpm create next-app@latest bimbingo --typescript --tailwind --app --eslint --src-dir=false`.
 - [ ] Install dependencies dasar (lihat `03-tech-stack-architecture.md` section 8).
 - [ ] Setup Prettier + `prettier-plugin-tailwindcss`.
 - [ ] Buat project Supabase region `ap-southeast-1`, simpan URL + anon key + service role key.
