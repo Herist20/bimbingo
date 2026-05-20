@@ -52,6 +52,30 @@ export async function listClients(opts?: {
   }
 }
 
+export async function searchClients(query: string): Promise<ActionResult<ClientRow[]>> {
+  try {
+    await requireUser();
+    const supabase = await getServerSupabase();
+    const q = query.trim();
+    let req = supabase
+      .from('clients')
+      .select(
+        'id, full_name, nickname, whatsapp, email, university, faculty, major, student_id, semester, target_defense, source, notes, archived_at, created_at, updated_at',
+      )
+      .is('archived_at', null)
+      .order('full_name', { ascending: true })
+      .limit(20);
+    if (q.length > 0) {
+      req = req.or(`full_name.ilike.%${q}%,whatsapp.ilike.%${q}%,university.ilike.%${q}%`);
+    }
+    const { data, error } = await req;
+    if (error) throw error;
+    return ok((data ?? []) as ClientRow[]);
+  } catch (e) {
+    return fail(e);
+  }
+}
+
 export async function getClient(id: string): Promise<ActionResult<ClientRow | null>> {
   try {
     await requireUser();
