@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, KanbanSquare, PencilLine } from 'lucide-react';
+import { ArrowLeft, FolderOpen, KanbanSquare, PencilLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -52,6 +52,12 @@ export default async function ProjectDetailPage({
             <Link href={`/projects/${project.id}/board`}>
               <KanbanSquare className="h-4 w-4" />
               Board task
+            </Link>
+          </Button>
+          <Button asChild variant="secondary">
+            <Link href={`/projects/${project.id}/files`}>
+              <FolderOpen className="h-4 w-4" />
+              File
             </Link>
           </Button>
           <Button asChild variant="secondary">
