@@ -11,7 +11,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { MoreHorizontal, PencilLine, Search, Trash2 } from 'lucide-react';
+import { MoreHorizontal, PencilLine, Search, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,7 +26,7 @@ import {
 import { ColumnManager, type BuiltinColumnSpec } from '@/components/custom-fields/column-manager';
 import { CustomFieldCell } from '@/components/custom-fields/custom-field-cell';
 import { useColumnVisibility } from '@/hooks/use-column-visibility';
-import { deleteLecturer, type LecturerRow } from '@/lib/actions/lecturers';
+import { bulkDeleteLecturers, deleteLecturer, type LecturerRow } from '@/lib/actions/lecturers';
 import type { CustomFieldRow } from '@/lib/schemas/custom-field';
 import { cn } from '@/lib/utils';
 
@@ -54,6 +54,8 @@ export function LecturersTable({ data, customFields: initialCustomFields = [] }:
   const [pending, startTransition] = React.useTransition();
   const [confirmingId, setConfirmingId] = React.useState<string | null>(null);
   const [customFields, setCustomFields] = React.useState<CustomFieldRow[]>(initialCustomFields);
+  const [rowSelection, setRowSelection] = React.useState<Record<string, boolean>>({});
+  const [bulkConfirming, setBulkConfirming] = React.useState(false);
 
   React.useEffect(() => setCustomFields(initialCustomFields), [initialCustomFields]);
 
@@ -90,6 +92,33 @@ export function LecturersTable({ data, customFields: initialCustomFields = [] }:
 
   const columns = React.useMemo<ColumnDef<LecturerRow>[]>(() => {
     const cols: ColumnDef<LecturerRow>[] = [];
+
+    cols.push({
+      id: '_select',
+      header: ({ table }) => (
+        <input
+          type="checkbox"
+          aria-label="Pilih semua di halaman ini"
+          checked={table.getIsAllPageRowsSelected()}
+          ref={(el) => {
+            if (el) el.indeterminate = table.getIsSomePageRowsSelected();
+          }}
+          onChange={(e) => table.toggleAllPageRowsSelected(e.target.checked)}
+          className="h-4 w-4 accent-[var(--brand)]"
+        />
+      ),
+      cell: ({ row }) => (
+        <input
+          type="checkbox"
+          aria-label={`Pilih ${row.original.full_name}`}
+          checked={row.getIsSelected()}
+          onChange={row.getToggleSelectedHandler()}
+          onClick={(e) => e.stopPropagation()}
+          className="h-4 w-4 accent-[var(--brand)]"
+        />
+      ),
+      enableSorting: false,
+    });
 
     if (columnVisibility.full_name !== false) {
       cols.push({
@@ -211,7 +240,10 @@ export function LecturersTable({ data, customFields: initialCustomFields = [] }:
   const table = useReactTable({
     data,
     columns,
-    state: { globalFilter, sorting },
+    state: { globalFilter, sorting, rowSelection },
+    onRowSelectionChange: setRowSelection,
+    enableRowSelection: true,
+    getRowId: (row) => row.id,
     onGlobalFilterChange: setGlobalFilter,
     onSortingChange: setSorting,
     globalFilterFn: (row, _columnId, filterValue) => {
@@ -228,6 +260,42 @@ export function LecturersTable({ data, customFields: initialCustomFields = [] }:
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
+
+  const selectedIds = React.useMemo(
+    () => Object.keys(rowSelection).filter((k) => rowSelection[k]),
+    [rowSelection],
+  );
+
+  function bulkDelete() {
+    if (selectedIds.length === 0) return;
+    if (!bulkConfirming) {
+      setBulkConfirming(true);
+      toast.warning(`Hapus ${selectedIds.length} dosen? Klik lagi untuk konfirmasi.`);
+      window.setTimeout(() => setBulkConfirming(false), 4000);
+      return;
+    }
+    startTransition(async () => {
+      const result = await bulkDeleteLecturers(selectedIds);
+      setBulkConfirming(false);
+      if (!result.ok) {
+        toast.error(result.error.message);
+        return;
+      }
+      const { deleted, blocked } = result.data;
+      if (deleted > 0 && blocked === 0) {
+        toast.success(`${deleted} dosen dihapus.`);
+      } else if (deleted > 0 && blocked > 0) {
+        toast.success(
+          `${deleted} dihapus · ${blocked} di-skip karena masih terikat ke proyek.`,
+        );
+      } else {
+        toast.error(
+          `Tidak ada yang dihapus. ${blocked} dosen masih terikat ke proyek — lepas tautan dulu.`,
+        );
+      }
+      setRowSelection({});
+    });
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -255,6 +323,47 @@ export function LecturersTable({ data, customFields: initialCustomFields = [] }:
           </span>
         </div>
       </div>
+
+      {selectedIds.length > 0 ? (
+        <div
+          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-[var(--danger-soft)] px-4 py-2.5 text-sm text-[var(--danger)] shadow-[var(--shadow-card)]"
+          style={{ borderColor: 'var(--danger)' }}
+          role="region"
+          aria-label="Aksi massal terpilih"
+        >
+          <span className="font-medium">
+            {selectedIds.length} dosen dipilih
+            <span className="ml-2 text-[11px] font-normal opacity-80">
+              Hapus = destruktif. Dosen yang masih terikat ke proyek akan di-skip.
+            </span>
+          </span>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant={bulkConfirming ? 'danger' : 'secondary'}
+              onClick={bulkDelete}
+              disabled={pending}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              {bulkConfirming
+                ? `Klik lagi untuk hapus ${selectedIds.length}`
+                : `Hapus ${selectedIds.length}`}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setRowSelection({});
+                setBulkConfirming(false);
+              }}
+              disabled={pending}
+            >
+              <X className="h-3.5 w-3.5" />
+              Batal
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="overflow-x-auto rounded-lg border" style={{ borderColor: 'var(--border)' }}>
         <table className="w-full text-left">

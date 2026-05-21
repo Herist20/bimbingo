@@ -11,7 +11,8 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { MoreHorizontal, PencilLine, Search } from 'lucide-react';
+import { Archive, ArchiveRestore, MoreHorizontal, PencilLine, Search, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -25,7 +26,11 @@ import { ColumnManager, type BuiltinColumnSpec } from '@/components/custom-field
 import { CustomFieldCell } from '@/components/custom-fields/custom-field-cell';
 import { useColumnVisibility } from '@/hooks/use-column-visibility';
 import { PROJECT_TYPE_LABEL } from '@/lib/schemas/project';
-import type { ProjectListRow } from '@/lib/actions/projects';
+import {
+  bulkArchiveProjects,
+  bulkRestoreProjects,
+  type ProjectListRow,
+} from '@/lib/actions/projects';
 import type { CustomFieldRow } from '@/lib/schemas/custom-field';
 import { formatRupiah, formatTanggal } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -54,6 +59,8 @@ export function ProjectsTable({ data, customFields: initialCustomFields = [] }: 
   // urutan default = urutan server, lalu user bisa override per kolom.
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [customFields, setCustomFields] = React.useState<CustomFieldRow[]>(initialCustomFields);
+  const [rowSelection, setRowSelection] = React.useState<Record<string, boolean>>({});
+  const [pending, startTransition] = React.useTransition();
 
   React.useEffect(() => setCustomFields(initialCustomFields), [initialCustomFields]);
 
@@ -72,6 +79,33 @@ export function ProjectsTable({ data, customFields: initialCustomFields = [] }: 
 
   const columns = React.useMemo<ColumnDef<ProjectListRow>[]>(() => {
     const cols: ColumnDef<ProjectListRow>[] = [];
+
+    cols.push({
+      id: '_select',
+      header: ({ table }) => (
+        <input
+          type="checkbox"
+          aria-label="Pilih semua di halaman ini"
+          checked={table.getIsAllPageRowsSelected()}
+          ref={(el) => {
+            if (el) el.indeterminate = table.getIsSomePageRowsSelected();
+          }}
+          onChange={(e) => table.toggleAllPageRowsSelected(e.target.checked)}
+          className="h-4 w-4 accent-[var(--brand)]"
+        />
+      ),
+      cell: ({ row }) => (
+        <input
+          type="checkbox"
+          aria-label={`Pilih ${row.original.title}`}
+          checked={row.getIsSelected()}
+          onChange={row.getToggleSelectedHandler()}
+          onClick={(e) => e.stopPropagation()}
+          className="h-4 w-4 accent-[var(--brand)]"
+        />
+      ),
+      enableSorting: false,
+    });
 
     if (columnVisibility.title !== false) {
       cols.push({
@@ -224,7 +258,10 @@ export function ProjectsTable({ data, customFields: initialCustomFields = [] }: 
   const table = useReactTable({
     data,
     columns,
-    state: { globalFilter, sorting },
+    state: { globalFilter, sorting, rowSelection },
+    onRowSelectionChange: setRowSelection,
+    enableRowSelection: true,
+    getRowId: (row) => row.id,
     onGlobalFilterChange: setGlobalFilter,
     onSortingChange: setSorting,
     globalFilterFn: (row, _columnId, filterValue) => {
@@ -241,6 +278,51 @@ export function ProjectsTable({ data, customFields: initialCustomFields = [] }: 
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
+
+  const selectedIds = React.useMemo(
+    () => Object.keys(rowSelection).filter((k) => rowSelection[k]),
+    [rowSelection],
+  );
+  const selectedRows = React.useMemo(
+    () => data.filter((p) => selectedIds.includes(p.id)),
+    [data, selectedIds],
+  );
+  const selectedActiveCount = selectedRows.filter((p) => !p.archived_at).length;
+  const selectedArchivedCount = selectedRows.filter((p) => p.archived_at).length;
+
+  function bulkArchive() {
+    if (selectedActiveCount === 0) {
+      toast.info('Tidak ada proyek aktif yang dipilih.');
+      return;
+    }
+    const ids = selectedRows.filter((p) => !p.archived_at).map((p) => p.id);
+    startTransition(async () => {
+      const result = await bulkArchiveProjects(ids);
+      if (!result.ok) {
+        toast.error(result.error.message);
+        return;
+      }
+      toast.success(`${result.data.count} proyek diarsipkan.`);
+      setRowSelection({});
+    });
+  }
+
+  function bulkRestore() {
+    if (selectedArchivedCount === 0) {
+      toast.info('Tidak ada proyek arsip yang dipilih.');
+      return;
+    }
+    const ids = selectedRows.filter((p) => p.archived_at).map((p) => p.id);
+    startTransition(async () => {
+      const result = await bulkRestoreProjects(ids);
+      if (!result.ok) {
+        toast.error(result.error.message);
+        return;
+      }
+      toast.success(`${result.data.count} proyek dipulihkan.`);
+      setRowSelection({});
+    });
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -268,6 +350,40 @@ export function ProjectsTable({ data, customFields: initialCustomFields = [] }: 
           </span>
         </div>
       </div>
+
+      {selectedIds.length > 0 ? (
+        <div
+          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-[var(--brand-soft)] px-4 py-2.5 text-sm text-[var(--brand-ink)] shadow-[var(--shadow-card)]"
+          style={{ borderColor: 'var(--brand)' }}
+          role="region"
+          aria-label="Aksi massal terpilih"
+        >
+          <span className="font-medium">
+            {selectedIds.length} proyek dipilih
+            <span className="ml-2 text-[11px] font-normal opacity-80">
+              ({selectedActiveCount} aktif · {selectedArchivedCount} arsip)
+            </span>
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {selectedActiveCount > 0 ? (
+              <Button size="sm" variant="secondary" onClick={bulkArchive} disabled={pending}>
+                <Archive className="h-3.5 w-3.5" />
+                Arsipkan {selectedActiveCount}
+              </Button>
+            ) : null}
+            {selectedArchivedCount > 0 ? (
+              <Button size="sm" variant="secondary" onClick={bulkRestore} disabled={pending}>
+                <ArchiveRestore className="h-3.5 w-3.5" />
+                Pulihkan {selectedArchivedCount}
+              </Button>
+            ) : null}
+            <Button size="sm" variant="ghost" onClick={() => setRowSelection({})} disabled={pending}>
+              <X className="h-3.5 w-3.5" />
+              Batal
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="overflow-x-auto rounded-lg border" style={{ borderColor: 'var(--border)' }}>
         <table className="w-full text-left">

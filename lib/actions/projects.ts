@@ -445,6 +445,67 @@ export async function restoreProject(id: string): Promise<ActionResult<{ id: str
   }
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function validateProjectIds(ids: unknown): string[] {
+  if (!Array.isArray(ids) || ids.length === 0) {
+    throw new ActionError('validation_error', 'Daftar ID kosong.');
+  }
+  if (ids.length > 200) {
+    throw new ActionError('validation_error', 'Maksimal 200 ID per operasi bulk.');
+  }
+  const valid: string[] = [];
+  for (const id of ids) {
+    if (typeof id !== 'string' || !UUID_REGEX.test(id)) {
+      throw new ActionError('validation_error', 'Format ID tidak valid.');
+    }
+    valid.push(id);
+  }
+  return valid;
+}
+
+export async function bulkArchiveProjects(
+  ids: string[],
+): Promise<ActionResult<{ count: number }>> {
+  try {
+    await requireUser();
+    const valid = validateProjectIds(ids);
+    const supabase = await getServerSupabase();
+    const { error, count } = await supabase
+      .from('projects')
+      .update({ archived_at: new Date().toISOString() }, { count: 'exact' })
+      .in('id', valid)
+      .is('archived_at', null);
+    if (error) throw error;
+    revalidatePath('/projects');
+    revalidatePath('/dashboard');
+    return ok({ count: count ?? 0 });
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function bulkRestoreProjects(
+  ids: string[],
+): Promise<ActionResult<{ count: number }>> {
+  try {
+    await requireUser();
+    const valid = validateProjectIds(ids);
+    const supabase = await getServerSupabase();
+    const { error, count } = await supabase
+      .from('projects')
+      .update({ archived_at: null }, { count: 'exact' })
+      .in('id', valid)
+      .not('archived_at', 'is', null);
+    if (error) throw error;
+    revalidatePath('/projects');
+    revalidatePath('/dashboard');
+    return ok({ count: count ?? 0 });
+  } catch (e) {
+    return fail(e);
+  }
+}
+
 export async function upsertMilestones(
   projectId: string,
   items: unknown,

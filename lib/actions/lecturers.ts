@@ -198,3 +198,48 @@ export async function deleteLecturer(id: string): Promise<ActionResult<{ id: str
     return fail(e);
   }
 }
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export async function bulkDeleteLecturers(
+  ids: string[],
+): Promise<ActionResult<{ deleted: number; blocked: number }>> {
+  try {
+    await requireUser();
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new ActionError('validation_error', 'Daftar ID kosong.');
+    }
+    if (ids.length > 100) {
+      throw new ActionError('validation_error', 'Maksimal 100 dosen per operasi bulk.');
+    }
+    for (const id of ids) {
+      if (typeof id !== 'string' || !UUID_REGEX.test(id)) {
+        throw new ActionError('validation_error', 'Format ID tidak valid.');
+      }
+    }
+    const supabase = await getServerSupabase();
+
+    // Pre-check: dosen yang masih terikat ke project_lecturers
+    const { data: blockedRows, error: checkError } = await supabase
+      .from('project_lecturers')
+      .select('lecturer_id')
+      .in('lecturer_id', ids);
+    if (checkError) throw checkError;
+    const blockedIds = new Set((blockedRows ?? []).map((r) => r.lecturer_id));
+    const deletable = ids.filter((id) => !blockedIds.has(id));
+
+    if (deletable.length === 0) {
+      return ok({ deleted: 0, blocked: blockedIds.size });
+    }
+
+    const { error, count } = await supabase
+      .from('lecturers')
+      .delete({ count: 'exact' })
+      .in('id', deletable);
+    if (error) throw error;
+    revalidatePath('/lecturers');
+    return ok({ deleted: count ?? deletable.length, blocked: blockedIds.size });
+  } catch (e) {
+    return fail(e);
+  }
+}
