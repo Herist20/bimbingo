@@ -19,7 +19,7 @@ pnpm install
 # 2. Isi env vars
 cp .env.example .env.local
 # isi NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY,
-# SUPABASE_SERVICE_ROLE_KEY, NEXT_PUBLIC_SITE_URL
+# SUPABASE_SERVICE_ROLE_KEY, NEXT_PUBLIC_APP_URL
 
 # 3. (opsional) Jalankan Supabase lokal
 pnpm db:start
@@ -122,7 +122,7 @@ vercel link
 vercel env add NEXT_PUBLIC_SUPABASE_URL production
 vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY production
 vercel env add SUPABASE_SERVICE_ROLE_KEY production
-vercel env add NEXT_PUBLIC_SITE_URL production
+vercel env add NEXT_PUBLIC_APP_URL production
 
 # Deploy preview
 vercel
@@ -145,7 +145,7 @@ Atau via Vercel dashboard:
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project settings → API | Aman exposed ke client |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase project settings → API | Aman exposed ke client |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase project settings → API | **Server-only**. Jangan prefix `NEXT_PUBLIC_`. |
-| `NEXT_PUBLIC_SITE_URL` | URL produksi Vercel (mis. `https://bimbingo.vercel.app`) | Dipakai OG + sitemap |
+| `NEXT_PUBLIC_APP_URL` | URL produksi Vercel (mis. `https://bimbingo.vercel.app`) | Dipakai OG + sitemap |
 
 ### Verifikasi pasca-deploy
 
