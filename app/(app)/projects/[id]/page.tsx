@@ -11,6 +11,7 @@ import { LecturerAssignments } from '@/components/projects/lecturer-assignments'
 import { getProject } from '@/lib/actions/projects';
 import { listCustomFields } from '@/lib/actions/custom-fields';
 import { CustomDataSection } from '@/components/custom-fields/custom-data-section';
+import { ProjectActivityCard } from '@/components/audit/project-activity-card';
 import { PROJECT_TYPE_LABEL } from '@/lib/schemas/project';
 import { formatRupiah, formatTanggal, formatTanggalRelatif } from '@/lib/format';
 
@@ -155,6 +156,8 @@ export default async function ProjectDetailPage({
       </Card>
 
       <CustomDataSection fields={customFields} data={project.custom_data ?? {}} />
+
+      <ProjectActivityCard projectId={project.id} limit={6} />
 
       <Separator />
 
