@@ -22,23 +22,65 @@ const jetbrainsMono = JetBrains_Mono({
   display: 'swap',
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://bimbingo.app';
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Bimbingo — Manajemen Pendampingan Skripsi',
+    default: 'Bimbingo — Almanak kerja pendampingan skripsi',
     template: '%s · Bimbingo',
   },
   description:
-    'Sistem manajemen pendampingan skripsi terpusat: tracking klien, progres bab, pembayaran, dan dokumen.',
+    'Workspace warm-tone untuk pendampingan skripsi: tracking klien, progres bab, pembayaran termin, dan dokumen. Menggantikan spreadsheet + WhatsApp + Google Drive.',
   applicationName: 'Bimbingo',
+  authors: [{ name: 'Heri', url: 'https://github.com/Herist20' }],
+  keywords: [
+    'bimbingo',
+    'pendampingan skripsi',
+    'joki skripsi',
+    'manajemen klien',
+    'kanban skripsi',
+    'workflow skripsi',
+    'next.js',
+    'supabase',
+  ],
+  category: 'productivity',
+  alternates: {
+    canonical: SITE_URL,
+    languages: { 'id-ID': SITE_URL },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'id_ID',
+    url: SITE_URL,
+    title: 'Bimbingo — Almanak kerja pendampingan skripsi',
+    description:
+      'Workspace warm-tone untuk pelaku jasa pendampingan skripsi. Klien, board task, milestone bab, dan termin pembayaran dalam satu permukaan tenang.',
+    siteName: 'Bimbingo',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Bimbingo — Almanak kerja pendampingan skripsi',
+    description:
+      'Tutup spreadsheet itu. Buka almanak Anda. Workspace terpusat untuk pendampingan skripsi.',
+    creator: '@Herist20',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
+  },
+  formatDetection: { telephone: false, email: false, address: false },
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#0a0a0a' },
+    { media: '(prefers-color-scheme: light)', color: '#f8f4ee' },
+    { media: '(prefers-color-scheme: dark)', color: '#1e1816' },
   ],
   width: 'device-width',
   initialScale: 1,
+  colorScheme: 'light dark',
 };
 
 export default function RootLayout({
