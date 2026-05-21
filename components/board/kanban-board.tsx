@@ -21,6 +21,8 @@ import { TaskQuickAdd } from './task-quick-add';
 import { TASK_STATUSES, type TaskStatus } from '@/lib/schemas/task';
 import type { CustomFieldRow } from '@/lib/schemas/custom-field';
 import { moveTask, type TaskRow } from '@/lib/actions/tasks';
+import { useRealtimeTasks } from './use-realtime-tasks';
+import { cn } from '@/lib/utils';
 
 interface KanbanBoardProps {
   projectId: string;
@@ -29,14 +31,10 @@ interface KanbanBoardProps {
 }
 
 export function KanbanBoard({ projectId, initialTasks, customFields = [] }: KanbanBoardProps) {
-  const [tasks, setTasks] = React.useState<TaskRow[]>(initialTasks);
+  const { tasks, setTasks, status: realtimeStatus } = useRealtimeTasks(projectId, initialTasks);
   const [activeTask, setActiveTask] = React.useState<TaskRow | null>(null);
   const [detailTask, setDetailTask] = React.useState<TaskRow | null>(null);
   const [quickAddStatus, setQuickAddStatus] = React.useState<TaskStatus | null>(null);
-
-  React.useEffect(() => {
-    setTasks(initialTasks);
-  }, [initialTasks]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -133,6 +131,7 @@ export function KanbanBoard({ projectId, initialTasks, customFields = [] }: Kanb
 
   return (
     <div className="flex flex-col gap-4">
+      <RealtimeIndicator status={realtimeStatus} />
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -187,3 +186,34 @@ export function KanbanBoard({ projectId, initialTasks, customFields = [] }: Kanb
     </div>
   );
 }
+
+function RealtimeIndicator({ status }: { status: 'idle' | 'connecting' | 'live' | 'error' }) {
+  const config = {
+    idle: { label: 'Offline', dotClass: 'bg-[var(--text-muted)]', ping: false },
+    connecting: { label: 'Menyambung…', dotClass: 'bg-[var(--warning)]', ping: false },
+    live: { label: 'Sinkron langsung', dotClass: 'bg-[var(--success)]', ping: true },
+    error: { label: 'Gagal sinkron', dotClass: 'bg-[var(--danger)]', ping: false },
+  }[status];
+
+  return (
+    <div
+      className="inline-flex w-fit items-center gap-2 rounded-full border bg-[var(--bg-elevated)] px-3 py-1 text-[11px] font-medium text-[var(--text-secondary)]"
+      style={{ borderColor: 'var(--border)' }}
+      role="status"
+      aria-live="polite"
+    >
+      <span className="relative flex h-2 w-2">
+        {config.ping ? (
+          <span className={cn('absolute inset-0 animate-ping rounded-full opacity-60', config.dotClass)} />
+        ) : null}
+        <span className={cn('relative h-2 w-2 rounded-full', config.dotClass)} />
+      </span>
+      {config.label}
+      <span className="font-mono text-[9px] text-[var(--text-muted)]">·</span>
+      <span className="font-mono text-[9px] text-[var(--text-muted)]">
+        Tarik kartu antar kolom · perubahan tampil di tab lain
+      </span>
+    </div>
+  );
+}
+
