@@ -158,9 +158,10 @@ const SECTIONS: Array<{
       },
       {
         icon: Lock,
-        label: 'Audit log UI',
-        desc: 'Trigger audit_logs sudah jalan di DB. UI viewer dibangun di fase 2.',
-        status: 'fase-2',
+        label: 'Audit log',
+        desc: 'Riwayat perubahan status proyek + log lain dari trigger DB. Buka untuk filter & lihat diff.',
+        href: '/settings/audit-log',
+        status: 'aktif',
       },
     ],
   },
