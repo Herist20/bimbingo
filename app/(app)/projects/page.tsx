@@ -14,12 +14,15 @@ export const dynamic = 'force-dynamic';
 
 export default async function ProjectsPage() {
   const [result, cfResult] = await Promise.all([
-    listProjects(),
+    listProjects({ includeArchived: true }),
     listCustomFields('project'),
   ]);
   const customFields = cfResult.ok ? cfResult.data : [];
   const totalCount = result.ok ? result.data.length : 0;
-  const activeCount = result.ok ? result.data.filter((p) => p.status === 'active').length : 0;
+  const activeCount = result.ok
+    ? result.data.filter((p) => p.status === 'active' && !p.archived_at).length
+    : 0;
+  const archivedCount = result.ok ? result.data.filter((p) => p.archived_at).length : 0;
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6">
@@ -30,6 +33,7 @@ export default async function ProjectsPage() {
         meta={
           <>
             <span className="chip chip-brand">{activeCount} aktif</span>
+            {archivedCount > 0 ? <span className="chip">{archivedCount} arsip</span> : null}
             <span className="chip">{totalCount} total</span>
           </>
         }

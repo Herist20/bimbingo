@@ -53,6 +53,14 @@ const BUILTIN_DEFAULTS: Record<string, boolean> = Object.fromEntries(
   BUILTIN_COLUMNS.map((c) => [c.key, true]),
 );
 
+type StatusFilter = 'active' | 'archived' | 'all';
+
+const STATUS_OPTIONS: Array<{ key: StatusFilter; label: string }> = [
+  { key: 'active', label: 'Aktif' },
+  { key: 'archived', label: 'Arsip' },
+  { key: 'all', label: 'Semua' },
+];
+
 export function ProjectsTable({ data, customFields: initialCustomFields = [] }: ProjectsTableProps) {
   const [globalFilter, setGlobalFilter] = React.useState('');
   // Data sudah disort server-side (updated_at desc). Biarkan kosong supaya
@@ -61,8 +69,27 @@ export function ProjectsTable({ data, customFields: initialCustomFields = [] }: 
   const [customFields, setCustomFields] = React.useState<CustomFieldRow[]>(initialCustomFields);
   const [rowSelection, setRowSelection] = React.useState<Record<string, boolean>>({});
   const [pending, startTransition] = React.useTransition();
+  const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('active');
 
   React.useEffect(() => setCustomFields(initialCustomFields), [initialCustomFields]);
+
+  // Reset selection saat filter status berubah (hidden row tidak ke-leak)
+  React.useEffect(() => setRowSelection({}), [statusFilter]);
+
+  const filteredByStatus = React.useMemo(() => {
+    if (statusFilter === 'all') return data;
+    if (statusFilter === 'archived') return data.filter((p) => p.archived_at !== null);
+    return data.filter((p) => p.archived_at === null);
+  }, [data, statusFilter]);
+
+  const counts = React.useMemo(
+    () => ({
+      active: data.filter((p) => p.archived_at === null).length,
+      archived: data.filter((p) => p.archived_at !== null).length,
+      all: data.length,
+    }),
+    [data],
+  );
 
   const defaultVisibility = React.useMemo(() => {
     const map = { ...BUILTIN_DEFAULTS };
@@ -256,7 +283,7 @@ export function ProjectsTable({ data, customFields: initialCustomFields = [] }: 
   }, [columnVisibility, customFields]);
 
   const table = useReactTable({
-    data,
+    data: filteredByStatus,
     columns,
     state: { globalFilter, sorting, rowSelection },
     onRowSelectionChange: setRowSelection,
@@ -327,14 +354,53 @@ export function ProjectsTable({ data, customFields: initialCustomFields = [] }: 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
-          <Input
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            placeholder="Cari judul / klien / status…"
-            className="pl-8"
-          />
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
+            <Input
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              placeholder="Cari judul / klien / status…"
+              className="pl-8"
+            />
+          </div>
+          <div
+            role="tablist"
+            aria-label="Filter status proyek"
+            className="inline-flex h-10 items-center gap-0.5 rounded-md border bg-[var(--bg-base)] p-1"
+            style={{ borderColor: 'var(--border-strong)' }}
+          >
+            {STATUS_OPTIONS.map((opt) => {
+              const selected = statusFilter === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={selected}
+                  onClick={() => setStatusFilter(opt.key)}
+                  className={cn(
+                    'inline-flex h-8 items-center gap-1.5 rounded-sm px-3 text-sm font-medium transition-all',
+                    selected
+                      ? 'bg-[var(--brand-soft)] text-[var(--brand-ink)] shadow-[var(--shadow-card)]'
+                      : 'text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)] hover:text-[var(--text-primary)]',
+                  )}
+                >
+                  <span>{opt.label}</span>
+                  <span
+                    className={cn(
+                      'inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-[10px] font-semibold tabular-nums',
+                      selected
+                        ? 'bg-[var(--brand)] text-white'
+                        : 'bg-[var(--bg-muted)] text-[var(--text-muted)]',
+                    )}
+                  >
+                    {counts[opt.key]}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <ColumnManager
