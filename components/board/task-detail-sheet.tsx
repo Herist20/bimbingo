@@ -27,12 +27,12 @@ import { CustomFieldsSection } from '@/components/custom-fields/custom-fields-se
 import {
   addTaskComment,
   deleteTask,
-  listTaskComments,
   updateTask,
-  type TaskCommentRow,
   type TaskRow,
 } from '@/lib/actions/tasks';
+import { useRealtimeComments } from './use-realtime-comments';
 import { formatTanggal } from '@/lib/format';
+import { cn } from '@/lib/utils';
 
 interface TaskDetailSheetProps {
   task: TaskRow;
@@ -54,10 +54,15 @@ export function TaskDetailSheet({
   const [draft, setDraft] = React.useState<TaskRow>(task);
   const [customData, setCustomData] = React.useState<Record<string, unknown>>(task.custom_data ?? {});
   const [customErrors, setCustomErrors] = React.useState<Record<string, string>>({});
-  const [comments, setComments] = React.useState<TaskCommentRow[]>([]);
   const [commentBody, setCommentBody] = React.useState('');
   const [pending, startTransition] = React.useTransition();
   const [confirmDelete, setConfirmDelete] = React.useState(false);
+
+  const {
+    comments,
+    setComments,
+    status: commentsStatus,
+  } = useRealtimeComments(open ? task.id : null);
 
   React.useEffect(() => {
     setDraft(task);
@@ -65,13 +70,6 @@ export function TaskDetailSheet({
     setCustomErrors({});
     setConfirmDelete(false);
   }, [task]);
-
-  React.useEffect(() => {
-    if (!open) return;
-    listTaskComments(task.id).then((result) => {
-      if (result.ok) setComments(result.data);
-    });
-  }, [open, task.id]);
 
   function save() {
     setCustomErrors({});
@@ -228,7 +226,38 @@ export function TaskDetailSheet({
           <Separator />
 
           <div className="flex flex-col gap-3">
-            <h3 className="text-sm font-semibold">Catatan / komentar</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Catatan / komentar</h3>
+              <span
+                className="inline-flex items-center gap-1.5 text-[10px] text-[var(--text-muted)]"
+                aria-live="polite"
+              >
+                <span className="relative flex h-1.5 w-1.5">
+                  {commentsStatus === 'live' ? (
+                    <span className="absolute inset-0 animate-ping rounded-full bg-[var(--success)] opacity-60" />
+                  ) : null}
+                  <span
+                    className={cn(
+                      'relative h-1.5 w-1.5 rounded-full',
+                      commentsStatus === 'live' && 'bg-[var(--success)]',
+                      commentsStatus === 'connecting' && 'bg-[var(--warning)]',
+                      commentsStatus === 'loading' && 'bg-[var(--info)]',
+                      commentsStatus === 'error' && 'bg-[var(--danger)]',
+                      commentsStatus === 'idle' && 'bg-[var(--text-muted)]',
+                    )}
+                  />
+                </span>
+                {commentsStatus === 'live'
+                  ? 'Live'
+                  : commentsStatus === 'connecting'
+                    ? 'Menyambung…'
+                    : commentsStatus === 'loading'
+                      ? 'Memuat…'
+                      : commentsStatus === 'error'
+                        ? 'Gagal sinkron'
+                        : 'Offline'}
+              </span>
+            </div>
             <div className="flex gap-2">
               <textarea
                 rows={2}
