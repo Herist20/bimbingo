@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Printer } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FinanceStats } from '@/components/payments/finance-stats';
 import { PaymentsTable } from '@/components/payments/payments-table';
@@ -37,11 +38,19 @@ export default async function ProjectFinancePage({
         Detail proyek
       </Link>
 
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{project.title}</h1>
-        <p className="text-sm text-[var(--text-secondary)]">
-          Pencatatan termin & ringkasan keuangan proyek ini.
-        </p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">{project.title}</h1>
+          <p className="text-sm text-[var(--text-secondary)]">
+            Pencatatan termin & ringkasan keuangan proyek ini.
+          </p>
+        </div>
+        <Button asChild variant="secondary">
+          <Link href={`/invoice/${id}`} target="_blank" rel="noreferrer">
+            <Printer className="h-4 w-4" />
+            Cetak invoice
+          </Link>
+        </Button>
       </div>
 
       <FinanceStats
