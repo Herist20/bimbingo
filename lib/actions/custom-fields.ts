@@ -108,8 +108,7 @@ export async function createCustomField(input: unknown): Promise<ActionResult<Cu
       throw error;
     }
 
-    revalidatePath('/settings/custom-fields');
-    revalidatePath(`/settings/custom-fields/${parsed.data.entity_type}`);
+    revalidatePath(`/${parsed.data.entity_type === 'client' ? 'clients' : parsed.data.entity_type === 'project' ? 'projects' : parsed.data.entity_type === 'lecturer' ? 'lecturers' : parsed.data.entity_type === 'payment' ? 'finance' : 'projects'}`);
     return ok(data as CustomFieldRow);
   } catch (e) {
     return fail(e);
@@ -138,8 +137,7 @@ export async function updateCustomField(
       .select(COLUMNS)
       .single();
     if (error) throw error;
-    revalidatePath('/settings/custom-fields');
-    revalidatePath(`/settings/custom-fields/${data.entity_type}`);
+    revalidatePath(`/${data.entity_type === 'client' ? 'clients' : data.entity_type === 'project' ? 'projects' : data.entity_type === 'lecturer' ? 'lecturers' : data.entity_type === 'payment' ? 'finance' : 'projects'}`);
     return ok(data as CustomFieldRow);
   } catch (e) {
     return fail(e);
@@ -157,8 +155,7 @@ export async function archiveCustomField(id: string): Promise<ActionResult<{ id:
       .select('entity_type')
       .single();
     if (error) throw error;
-    revalidatePath('/settings/custom-fields');
-    revalidatePath(`/settings/custom-fields/${data.entity_type}`);
+    revalidatePath(`/${data.entity_type === 'client' ? 'clients' : data.entity_type === 'project' ? 'projects' : data.entity_type === 'lecturer' ? 'lecturers' : data.entity_type === 'payment' ? 'finance' : 'projects'}`);
     return ok({ id });
   } catch (e) {
     return fail(e);
@@ -176,8 +173,7 @@ export async function restoreCustomField(id: string): Promise<ActionResult<{ id:
       .select('entity_type')
       .single();
     if (error) throw error;
-    revalidatePath('/settings/custom-fields');
-    revalidatePath(`/settings/custom-fields/${data.entity_type}`);
+    revalidatePath(`/${data.entity_type === 'client' ? 'clients' : data.entity_type === 'project' ? 'projects' : data.entity_type === 'lecturer' ? 'lecturers' : data.entity_type === 'payment' ? 'finance' : 'projects'}`);
     return ok({ id });
   } catch (e) {
     return fail(e);
@@ -203,7 +199,7 @@ export async function reorderCustomFields(
         .eq('id', id);
       if (error) throw error;
     }
-    revalidatePath(`/settings/custom-fields/${entityType}`);
+    revalidatePath(`/${entityType === 'client' ? 'clients' : entityType === 'project' ? 'projects' : entityType === 'lecturer' ? 'lecturers' : entityType === 'payment' ? 'finance' : 'projects'}`);
     return ok({ count: orderedIds.length });
   } catch (e) {
     return fail(e);

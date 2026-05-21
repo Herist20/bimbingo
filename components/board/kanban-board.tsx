@@ -19,14 +19,16 @@ import { TaskCard } from './task-card';
 import { TaskDetailSheet } from './task-detail-sheet';
 import { TaskQuickAdd } from './task-quick-add';
 import { TASK_STATUSES, type TaskStatus } from '@/lib/schemas/task';
+import type { CustomFieldRow } from '@/lib/schemas/custom-field';
 import { moveTask, type TaskRow } from '@/lib/actions/tasks';
 
 interface KanbanBoardProps {
   projectId: string;
   initialTasks: TaskRow[];
+  customFields?: CustomFieldRow[];
 }
 
-export function KanbanBoard({ projectId, initialTasks }: KanbanBoardProps) {
+export function KanbanBoard({ projectId, initialTasks, customFields = [] }: KanbanBoardProps) {
   const [tasks, setTasks] = React.useState<TaskRow[]>(initialTasks);
   const [activeTask, setActiveTask] = React.useState<TaskRow | null>(null);
   const [detailTask, setDetailTask] = React.useState<TaskRow | null>(null);
@@ -165,6 +167,7 @@ export function KanbanBoard({ projectId, initialTasks }: KanbanBoardProps) {
             setTasks((prev) => prev.filter((t) => t.id !== id));
             setDetailTask(null);
           }}
+          customFields={customFields}
         />
       ) : null}
 
@@ -178,6 +181,7 @@ export function KanbanBoard({ projectId, initialTasks }: KanbanBoardProps) {
             setTasks((prev) => [...prev, t]);
             setQuickAddStatus(null);
           }}
+          customFields={customFields}
         />
       ) : null}
     </div>

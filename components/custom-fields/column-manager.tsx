@@ -121,7 +121,6 @@ export function ColumnManager({
   }
 
   const activeCustom = customFields.filter((c) => !c.archived_at);
-  void scopeRef; // reserved untuk future per-project scope picker di FieldEditor
 
   return (
     <>
@@ -293,6 +292,8 @@ export function ColumnManager({
         onOpenChange={setEditorOpen}
         editing={editing}
         onSaved={handleSaved}
+        scopeRef={scopeRef ?? null}
+        scopeRefLabel="Hanya untuk konteks ini (mis. proyek saat ini)"
       />
     </>
   );

@@ -23,20 +23,52 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ColumnManager, type BuiltinColumnSpec } from '@/components/custom-fields/column-manager';
+import { CustomFieldCell } from '@/components/custom-fields/custom-field-cell';
+import { useColumnVisibility } from '@/hooks/use-column-visibility';
 import { deleteLecturer, type LecturerRow } from '@/lib/actions/lecturers';
+import type { CustomFieldRow } from '@/lib/schemas/custom-field';
 import { cn } from '@/lib/utils';
 
 interface LecturersTableProps {
   data: LecturerRow[];
+  customFields?: CustomFieldRow[];
 }
 
-export function LecturersTable({ data }: LecturersTableProps) {
+const BUILTIN_COLUMNS: BuiltinColumnSpec[] = [
+  { key: 'full_name', label: 'Nama', toggleable: false },
+  { key: 'university', label: 'Kampus' },
+  { key: 'faculty', label: 'Fakultas' },
+  { key: 'tags', label: 'Tag' },
+];
+
+const BUILTIN_DEFAULTS: Record<string, boolean> = Object.fromEntries(
+  BUILTIN_COLUMNS.map((c) => [c.key, true]),
+);
+
+export function LecturersTable({ data, customFields: initialCustomFields = [] }: LecturersTableProps) {
   const [globalFilter, setGlobalFilter] = React.useState('');
   const [sorting, setSorting] = React.useState<SortingState>([
     { id: 'full_name', desc: false },
   ]);
   const [pending, startTransition] = React.useTransition();
   const [confirmingId, setConfirmingId] = React.useState<string | null>(null);
+  const [customFields, setCustomFields] = React.useState<CustomFieldRow[]>(initialCustomFields);
+
+  React.useEffect(() => setCustomFields(initialCustomFields), [initialCustomFields]);
+
+  const defaultVisibility = React.useMemo(() => {
+    const map = { ...BUILTIN_DEFAULTS };
+    for (const f of customFields) {
+      if (!f.archived_at) map[`cf:${f.key}`] = f.show_in_list;
+    }
+    return map;
+  }, [customFields]);
+
+  const { visible: columnVisibility, toggle: toggleColumn } = useColumnVisibility(
+    'lecturers',
+    defaultVisibility,
+  );
 
   const handleDelete = (row: LecturerRow) => {
     if (confirmingId !== row.id) {
@@ -56,9 +88,12 @@ export function LecturersTable({ data }: LecturersTableProps) {
     });
   };
 
-  const columns = React.useMemo<ColumnDef<LecturerRow>[]>(
-    () => [
-      {
+  const columns = React.useMemo<ColumnDef<LecturerRow>[]>(() => {
+    const cols: ColumnDef<LecturerRow>[] = [];
+
+    if (columnVisibility.full_name !== false) {
+      cols.push({
+        id: 'full_name',
         accessorKey: 'full_name',
         header: 'Nama',
         cell: ({ row }) => (
@@ -74,18 +109,30 @@ export function LecturersTable({ data }: LecturersTableProps) {
             ) : null}
           </div>
         ),
-      },
-      {
+      });
+    }
+
+    if (columnVisibility.university !== false) {
+      cols.push({
+        id: 'university',
         accessorKey: 'university',
         header: 'Kampus',
         cell: ({ getValue }) => <span className="text-sm">{getValue<string | null>() ?? '—'}</span>,
-      },
-      {
+      });
+    }
+
+    if (columnVisibility.faculty !== false) {
+      cols.push({
+        id: 'faculty',
         accessorKey: 'faculty',
         header: 'Fakultas',
         cell: ({ getValue }) => <span className="text-sm">{getValue<string | null>() ?? '—'}</span>,
-      },
-      {
+      });
+    }
+
+    if (columnVisibility.tags !== false) {
+      cols.push({
+        id: 'tags',
         accessorKey: 'tags',
         header: 'Tag',
         cell: ({ getValue }) => {
@@ -101,50 +148,65 @@ export function LecturersTable({ data }: LecturersTableProps) {
             </div>
           );
         },
-      },
-      {
-        id: 'actions',
-        header: '',
+      });
+    }
+
+    for (const f of customFields) {
+      if (f.archived_at) continue;
+      const colKey = `cf:${f.key}`;
+      if (columnVisibility[colKey] === false) continue;
+      cols.push({
+        id: colKey,
+        header: f.label,
         cell: ({ row }) => (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`Menu untuk ${row.original.full_name}`}
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={`/lecturers/${row.original.id}`}>
-                  <Search className="h-4 w-4" />
-                  Lihat detail
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/lecturers/${row.original.id}/edit`}>
-                  <PencilLine className="h-4 w-4" />
-                  Edit
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onSelect={() => handleDelete(row.original)}
-                disabled={pending}
-                className={confirmingId === row.original.id ? 'text-[var(--danger)]' : ''}
-              >
-                <Trash2 className="h-4 w-4" />
-                {confirmingId === row.original.id ? 'Klik lagi untuk konfirmasi' : 'Hapus'}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <CustomFieldCell field={f} value={row.original.custom_data?.[f.key]} />
         ),
-      },
-    ],
-    [pending, confirmingId],
-  );
+      });
+    }
+
+    cols.push({
+      id: 'actions',
+      header: '',
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={`Menu untuk ${row.original.full_name}`}
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link href={`/lecturers/${row.original.id}`}>
+                <Search className="h-4 w-4" />
+                Lihat detail
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/lecturers/${row.original.id}/edit`}>
+                <PencilLine className="h-4 w-4" />
+                Edit
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onSelect={() => handleDelete(row.original)}
+              disabled={pending}
+              className={confirmingId === row.original.id ? 'text-[var(--danger)]' : ''}
+            >
+              <Trash2 className="h-4 w-4" />
+              {confirmingId === row.original.id ? 'Klik lagi untuk konfirmasi' : 'Hapus'}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    });
+
+    return cols;
+  }, [columnVisibility, customFields, pending, confirmingId]);
 
   const table = useReactTable({
     data,
@@ -179,12 +241,22 @@ export function LecturersTable({ data }: LecturersTableProps) {
             className="pl-8"
           />
         </div>
-        <span className="text-xs text-[var(--text-muted)]">
-          {table.getFilteredRowModel().rows.length} dosen
-        </span>
+        <div className="flex items-center gap-2">
+          <ColumnManager
+            entityType="lecturer"
+            builtinColumns={BUILTIN_COLUMNS}
+            customFields={customFields}
+            onCustomFieldsChange={setCustomFields}
+            columnVisibility={columnVisibility}
+            onToggleColumn={toggleColumn}
+          />
+          <span className="text-xs text-[var(--text-muted)]">
+            {table.getFilteredRowModel().rows.length} dosen
+          </span>
+        </div>
       </div>
 
-      <div className="overflow-hidden rounded-lg border" style={{ borderColor: 'var(--border)' }}>
+      <div className="overflow-x-auto rounded-lg border" style={{ borderColor: 'var(--border)' }}>
         <table className="w-full text-left">
           <thead className="bg-[var(--bg-subtle)] text-xs uppercase text-[var(--text-muted)]">
             {table.getHeaderGroups().map((hg) => (

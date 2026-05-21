@@ -10,12 +10,16 @@ import type { CFEntityType, CustomFieldRow } from '@/lib/schemas/custom-field';
 interface AddFieldButtonProps {
   entityType: CFEntityType;
   label?: string;
+  scopeRef?: string | null;
+  scopeRefLabel?: string;
   onSaved?: (field: CustomFieldRow) => void;
 }
 
 export function AddFieldButton({
   entityType,
   label = 'Tambah field kustom',
+  scopeRef,
+  scopeRefLabel,
   onSaved,
 }: AddFieldButtonProps) {
   const router = useRouter();
@@ -31,6 +35,8 @@ export function AddFieldButton({
         entityType={entityType}
         open={open}
         onOpenChange={setOpen}
+        scopeRef={scopeRef ?? null}
+        scopeRefLabel={scopeRefLabel}
         onSaved={(f) => {
           setOpen(false);
           if (onSaved) onSaved(f);

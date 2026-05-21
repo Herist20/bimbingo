@@ -23,6 +23,13 @@ interface FieldEditorProps {
   onOpenChange: (open: boolean) => void;
   editing?: CustomFieldRow | null;
   onSaved: (field: CustomFieldRow) => void;
+  /**
+   * Konteks proyek (atau parent lain) ketika FieldEditor dibuka inline dari
+   * halaman per-proyek. Jika diisi, user dapat memilih scope "khusus proyek ini".
+   */
+  scopeRef?: string | null;
+  /** Label untuk pilihan scope spesifik. Default: "Hanya untuk konteks ini". */
+  scopeRefLabel?: string;
 }
 
 export function FieldEditor({
@@ -31,6 +38,8 @@ export function FieldEditor({
   onOpenChange,
   editing,
   onSaved,
+  scopeRef,
+  scopeRefLabel,
 }: FieldEditorProps) {
   const [label, setLabel] = React.useState('');
   const [description, setDescription] = React.useState('');
@@ -39,6 +48,7 @@ export function FieldEditor({
   const [showInForm, setShowInForm] = React.useState(true);
   const [showInList, setShowInList] = React.useState(true);
   const [options, setOptions] = React.useState<CFOption[]>([]);
+  const [scope, setScope] = React.useState<'global' | 'project'>('global');
   const [pending, startTransition] = React.useTransition();
 
   React.useEffect(() => {
@@ -51,6 +61,7 @@ export function FieldEditor({
       setShowInForm(editing.show_in_form);
       setShowInList(editing.show_in_list);
       setOptions(editing.options);
+      setScope(editing.scope);
     } else {
       setLabel('');
       setDescription('');
@@ -59,10 +70,13 @@ export function FieldEditor({
       setShowInForm(true);
       setShowInList(true);
       setOptions([]);
+      setScope('global');
     }
   }, [open, editing]);
 
   const needsOptions = fieldType === 'select' || fieldType === 'multiselect';
+  const canPickScope = Boolean(scopeRef) && !editing;
+  const scopeLocalLabel = scopeRefLabel ?? 'Hanya untuk konteks ini';
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -87,6 +101,7 @@ export function FieldEditor({
         return;
       }
 
+      const useProjectScope = canPickScope && scope === 'project';
       const result = await createCustomField({
         entity_type: entityType,
         label,
@@ -96,6 +111,8 @@ export function FieldEditor({
         required,
         show_in_form: showInForm,
         show_in_list: showInList,
+        scope: useProjectScope ? 'project' : 'global',
+        scope_ref: useProjectScope ? scopeRef : null,
       });
       if (!result.ok) {
         toast.error(result.error.message);
@@ -161,6 +178,38 @@ export function FieldEditor({
             {needsOptions ? (
               <Field label="Opsi" hint="Minimal 1 opsi untuk tipe pilihan.">
                 <OptionsEditor value={options} onChange={setOptions} />
+              </Field>
+            ) : null}
+
+            {canPickScope ? (
+              <Field
+                label="Cakupan"
+                hint="Field global tampil di semua entitas. Cakupan spesifik membatasi field ini ke konteks saat ini saja."
+              >
+                <div className="flex flex-col gap-1.5">
+                  <label className="inline-flex items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      name="cf-scope"
+                      value="global"
+                      checked={scope === 'global'}
+                      onChange={() => setScope('global')}
+                      className="h-4 w-4 accent-[var(--brand)]"
+                    />
+                    Global (berlaku untuk semua)
+                  </label>
+                  <label className="inline-flex items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      name="cf-scope"
+                      value="project"
+                      checked={scope === 'project'}
+                      onChange={() => setScope('project')}
+                      className="h-4 w-4 accent-[var(--brand)]"
+                    />
+                    {scopeLocalLabel}
+                  </label>
+                </div>
               </Field>
             ) : null}
 

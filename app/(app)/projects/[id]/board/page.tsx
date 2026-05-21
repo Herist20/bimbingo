@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import { KanbanBoard } from '@/components/board/kanban-board';
 import { getProject } from '@/lib/actions/projects';
 import { listTasksByProject } from '@/lib/actions/tasks';
+import { listCustomFields } from '@/lib/actions/custom-fields';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,14 +14,16 @@ export default async function ProjectBoardPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [projectResult, tasksResult] = await Promise.all([
+  const [projectResult, tasksResult, cfResult] = await Promise.all([
     getProject(id),
     listTasksByProject(id),
+    listCustomFields('task', id),
   ]);
 
   if (!projectResult.ok || !projectResult.data) notFound();
   const { project } = projectResult.data;
   const tasks = tasksResult.ok ? tasksResult.data : [];
+  const customFields = cfResult.ok ? cfResult.data.filter((f) => !f.archived_at) : [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -39,7 +42,7 @@ export default async function ProjectBoardPage({
         </p>
       </div>
 
-      <KanbanBoard projectId={id} initialTasks={tasks} />
+      <KanbanBoard projectId={id} initialTasks={tasks} customFields={customFields} />
     </div>
   );
 }

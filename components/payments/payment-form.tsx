@@ -12,6 +12,8 @@ import {
   PaymentCreateSchema,
   type PaymentMethod,
 } from '@/lib/schemas/payment';
+import type { CustomFieldRow } from '@/lib/schemas/custom-field';
+import { CustomFieldsSection } from '@/components/custom-fields/custom-fields-section';
 import { recordPayment, updatePayment, type PaymentRow } from '@/lib/actions/payments';
 
 interface PaymentFormProps {
@@ -19,6 +21,8 @@ interface PaymentFormProps {
   projectId: string;
   paymentId?: string;
   initial?: Partial<PaymentRow>;
+  customFields?: CustomFieldRow[];
+  initialCustomData?: Record<string, unknown>;
   onDone?: (row: PaymentRow) => void;
   onCancel?: () => void;
 }
@@ -30,6 +34,8 @@ export function PaymentForm({
   projectId,
   paymentId,
   initial,
+  customFields = [],
+  initialCustomData = {},
   onDone,
   onCancel,
 }: PaymentFormProps) {
@@ -47,12 +53,15 @@ export function PaymentForm({
   );
   const [notes, setNotes] = React.useState(initial?.notes ?? '');
   const [verified, setVerified] = React.useState(initial?.verified ?? false);
+  const [customData, setCustomData] = React.useState<Record<string, unknown>>(initialCustomData);
+  const [customErrors, setCustomErrors] = React.useState<Record<string, string>>({});
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [pending, startTransition] = React.useTransition();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrors({});
+    setCustomErrors({});
 
     const payload = {
       project_id: projectId,
@@ -63,6 +72,7 @@ export function PaymentForm({
       installment_label: installmentLabel,
       notes,
       verified,
+      custom_data: customData,
     };
     const parsed = PaymentCreateSchema.safeParse(payload);
     if (!parsed.success) {
@@ -80,11 +90,16 @@ export function PaymentForm({
           : await updatePayment(paymentId!, payload);
       if (!result.ok) {
         if (result.error.fields) {
-          const e: Record<string, string> = {};
+          const cfKeys = new Set(customFields.map((f) => f.key));
+          const cfErrs: Record<string, string> = {};
+          const baseErrs: Record<string, string> = {};
           for (const [k, v] of Object.entries(result.error.fields)) {
-            if (v?.[0]) e[k] = v[0];
+            if (!v?.[0]) continue;
+            if (cfKeys.has(k)) cfErrs[k] = v[0];
+            else baseErrs[k] = v[0];
           }
-          setErrors(e);
+          if (Object.keys(baseErrs).length) setErrors(baseErrs);
+          if (Object.keys(cfErrs).length) setCustomErrors(cfErrs);
         }
         toast.error(result.error.message);
         return;
@@ -179,6 +194,15 @@ export function PaymentForm({
           className="flex w-full rounded-md border bg-[var(--bg-base)] px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 ring-offset-[var(--bg-base)] border-[var(--border-strong)]"
         />
       </Field>
+
+      {customFields.length > 0 ? (
+        <CustomFieldsSection
+          fields={customFields}
+          values={customData}
+          onChange={setCustomData}
+          errors={customErrors}
+        />
+      ) : null}
 
       <div className="flex justify-end gap-2 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
         {onCancel ? (

@@ -22,6 +22,8 @@ import {
   type TaskPriority,
   type TaskStatus,
 } from '@/lib/schemas/task';
+import type { CustomFieldRow } from '@/lib/schemas/custom-field';
+import { CustomFieldsSection } from '@/components/custom-fields/custom-fields-section';
 import {
   addTaskComment,
   deleteTask,
@@ -38,6 +40,7 @@ interface TaskDetailSheetProps {
   onOpenChange: (open: boolean) => void;
   onTaskChanged: (task: TaskRow) => void;
   onTaskDeleted: (id: string) => void;
+  customFields?: CustomFieldRow[];
 }
 
 export function TaskDetailSheet({
@@ -46,8 +49,11 @@ export function TaskDetailSheet({
   onOpenChange,
   onTaskChanged,
   onTaskDeleted,
+  customFields = [],
 }: TaskDetailSheetProps) {
   const [draft, setDraft] = React.useState<TaskRow>(task);
+  const [customData, setCustomData] = React.useState<Record<string, unknown>>(task.custom_data ?? {});
+  const [customErrors, setCustomErrors] = React.useState<Record<string, string>>({});
   const [comments, setComments] = React.useState<TaskCommentRow[]>([]);
   const [commentBody, setCommentBody] = React.useState('');
   const [pending, startTransition] = React.useTransition();
@@ -55,6 +61,8 @@ export function TaskDetailSheet({
 
   React.useEffect(() => {
     setDraft(task);
+    setCustomData(task.custom_data ?? {});
+    setCustomErrors({});
     setConfirmDelete(false);
   }, [task]);
 
@@ -66,6 +74,7 @@ export function TaskDetailSheet({
   }, [open, task.id]);
 
   function save() {
+    setCustomErrors({});
     startTransition(async () => {
       const result = await updateTask(task.id, {
         title: draft.title,
@@ -73,8 +82,17 @@ export function TaskDetailSheet({
         status: draft.status as TaskStatus,
         priority: draft.priority as TaskPriority,
         due_date: draft.due_date ?? '',
+        custom_data: customData,
       });
       if (!result.ok) {
+        if (result.error.fields) {
+          const cfKeys = new Set(customFields.map((f) => f.key));
+          const cfErrs: Record<string, string> = {};
+          for (const [k, v] of Object.entries(result.error.fields)) {
+            if (v?.[0] && cfKeys.has(k)) cfErrs[k] = v[0];
+          }
+          if (Object.keys(cfErrs).length) setCustomErrors(cfErrs);
+        }
         toast.error(result.error.message);
         return;
       }
@@ -182,6 +200,15 @@ export function TaskDetailSheet({
               className="flex w-full rounded-md border bg-[var(--bg-base)] px-3 py-2 text-sm text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 ring-offset-[var(--bg-base)] border-[var(--border-strong)]"
             />
           </Field>
+
+          {customFields.length > 0 ? (
+            <CustomFieldsSection
+              fields={customFields}
+              values={customData}
+              onChange={setCustomData}
+              errors={customErrors}
+            />
+          ) : null}
 
           <div className="flex justify-end gap-2">
             <Button

@@ -9,6 +9,11 @@ import {
   TaskUpdateSchema,
   type TaskStatus,
 } from '@/lib/schemas/task';
+import {
+  buildCustomDataValidator,
+  type CustomFieldRow,
+} from '@/lib/schemas/custom-field';
+import type { Json } from '@/types/database';
 import { ActionError, fail, ok, requireUser, type ActionResult } from './_helper';
 
 export type TaskRow = {
@@ -23,6 +28,7 @@ export type TaskRow = {
   due_date: string | null;
   completed_at: string | null;
   order_index: number;
+  custom_data: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 };
@@ -36,9 +42,34 @@ export type TaskCommentRow = {
 };
 
 const TASK_COLUMNS =
-  'id, project_id, milestone_id, title, description, status, priority, assignee_id, due_date, completed_at, order_index, created_at, updated_at';
+  'id, project_id, milestone_id, title, description, status, priority, assignee_id, due_date, completed_at, order_index, custom_data, created_at, updated_at';
 
 const ORDER_STEP = 1000;
+
+async function fetchTaskCustomFields(
+  supabase: Awaited<ReturnType<typeof getServerSupabase>>,
+  projectId?: string,
+): Promise<CustomFieldRow[]> {
+  let query = supabase
+    .from('custom_fields')
+    .select(
+      'id, owner_id, entity_type, scope, scope_ref, key, label, description, field_type, options, required, default_value, sequence, show_in_form, show_in_list, show_in_card, archived_at, created_at, updated_at',
+    )
+    .eq('entity_type', 'task')
+    .is('archived_at', null);
+  if (projectId) {
+    query = query.or(`scope.eq.global,and(scope.eq.project,scope_ref.eq.${projectId})`);
+  } else {
+    query = query.eq('scope', 'global');
+  }
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []) as CustomFieldRow[];
+}
+
+function toJson(value: Record<string, unknown>): Json {
+  return value as unknown as Json;
+}
 
 export async function listTasksByProject(
   projectId: string,
@@ -88,6 +119,17 @@ export async function createTask(input: unknown): Promise<ActionResult<TaskRow>>
     }
 
     const supabase = await getServerSupabase();
+    const fields = await fetchTaskCustomFields(supabase, parsed.data.project_id);
+    const cdRaw =
+      (input as { custom_data?: Record<string, unknown> } | null | undefined)?.custom_data ?? {};
+    const cdResult = buildCustomDataValidator(fields).safeParse(cdRaw);
+    if (!cdResult.success) {
+      throw new ActionError(
+        'validation_error',
+        'Field tambahan tidak valid.',
+        cdResult.error.flatten().fieldErrors as never,
+      );
+    }
 
     // Tentukan order_index = max + step di kolom status yang sama.
     const { data: maxRow, error: maxError } = await supabase
@@ -114,6 +156,7 @@ export async function createTask(input: unknown): Promise<ActionResult<TaskRow>>
         assignee_id: parsed.data.assignee_id ?? null,
         due_date: parsed.data.due_date ?? null,
         order_index: nextOrder,
+        custom_data: toJson(cdResult.data),
       })
       .select(TASK_COLUMNS)
       .single();
@@ -152,12 +195,33 @@ export async function updateTask(
       due_date?: string | null;
       milestone_id?: string | null;
       completed_at?: string | null;
+      custom_data?: Json;
     };
     const patch: TaskPatch = {};
     for (const [k, v] of Object.entries(parsed.data)) {
       (patch as Record<string, unknown>)[k] = v ?? null;
     }
     if (patch.status === 'done') patch.completed_at = new Date().toISOString();
+
+    const cdRaw = (input as { custom_data?: Record<string, unknown> } | null | undefined)?.custom_data;
+    if (cdRaw !== undefined) {
+      const { data: existing, error: existingError } = await supabase
+        .from('tasks')
+        .select('project_id')
+        .eq('id', id)
+        .maybeSingle();
+      if (existingError) throw existingError;
+      const fields = await fetchTaskCustomFields(supabase, existing?.project_id ?? undefined);
+      const cdResult = buildCustomDataValidator(fields).safeParse(cdRaw);
+      if (!cdResult.success) {
+        throw new ActionError(
+          'validation_error',
+          'Field tambahan tidak valid.',
+          cdResult.error.flatten().fieldErrors as never,
+        );
+      }
+      patch.custom_data = toJson(cdResult.data);
+    }
 
     const { data, error } = await supabase
       .from('tasks')

@@ -6,6 +6,7 @@ import { FinanceStats } from '@/components/payments/finance-stats';
 import { PaymentsTable } from '@/components/payments/payments-table';
 import { getProject } from '@/lib/actions/projects';
 import { listPaymentsByProject } from '@/lib/actions/payments';
+import { listCustomFields } from '@/lib/actions/custom-fields';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,14 +16,16 @@ export default async function ProjectFinancePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [projectResult, paymentsResult] = await Promise.all([
+  const [projectResult, paymentsResult, cfResult] = await Promise.all([
     getProject(id),
     listPaymentsByProject(id),
+    listCustomFields('payment'),
   ]);
 
   if (!projectResult.ok || !projectResult.data) notFound();
   const { project, finance } = projectResult.data;
   const payments = paymentsResult.ok ? paymentsResult.data : [];
+  const paymentFields = cfResult.ok ? cfResult.data.filter((f) => !f.archived_at) : [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -56,7 +59,7 @@ export default async function ProjectFinancePage({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <PaymentsTable projectId={id} initial={payments} />
+          <PaymentsTable projectId={id} initial={payments} customFields={paymentFields} />
         </CardContent>
       </Card>
     </div>

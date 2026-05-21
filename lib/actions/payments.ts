@@ -44,6 +44,7 @@ export type PaymentRow = {
   proof_file_id: string | null;
   notes: string | null;
   verified: boolean;
+  custom_data: Record<string, unknown>;
   created_at: string;
 };
 
@@ -53,7 +54,7 @@ export type PaymentListRow = PaymentRow & {
 };
 
 const COLUMNS =
-  'id, project_id, amount, paid_at, method, reference, installment_label, proof_file_id, notes, verified, created_at';
+  'id, project_id, amount, paid_at, method, reference, installment_label, proof_file_id, notes, verified, custom_data, created_at';
 
 export async function listPaymentsByProject(
   projectId: string,
@@ -104,6 +105,7 @@ export async function listPaymentsRange(opts: {
         proof_file_id: p.proof_file_id,
         notes: p.notes,
         verified: p.verified,
+        custom_data: (p.custom_data as Record<string, unknown> | null) ?? {},
         created_at: p.created_at,
         project_title: project?.title ?? '—',
         client_name: project?.client?.full_name ?? '—',

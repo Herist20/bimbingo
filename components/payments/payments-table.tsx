@@ -20,14 +20,16 @@ import {
   setPaymentVerified,
   type PaymentRow,
 } from '@/lib/actions/payments';
+import type { CustomFieldRow } from '@/lib/schemas/custom-field';
 import { formatRupiah, formatTanggal } from '@/lib/format';
 
 interface PaymentsTableProps {
   projectId: string;
   initial: PaymentRow[];
+  customFields?: CustomFieldRow[];
 }
 
-export function PaymentsTable({ projectId, initial }: PaymentsTableProps) {
+export function PaymentsTable({ projectId, initial, customFields = [] }: PaymentsTableProps) {
   const [rows, setRows] = React.useState<PaymentRow[]>(initial);
   const [formOpen, setFormOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<PaymentRow | null>(null);
@@ -216,6 +218,8 @@ export function PaymentsTable({ projectId, initial }: PaymentsTableProps) {
                 projectId={projectId}
                 paymentId={editing?.id}
                 initial={editing ?? undefined}
+                customFields={customFields}
+                initialCustomData={editing?.custom_data ?? {}}
                 onDone={handleSaved}
                 onCancel={() => setFormOpen(false)}
               />
