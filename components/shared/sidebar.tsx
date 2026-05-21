@@ -65,7 +65,7 @@ export function Sidebar() {
               Cmd / Ctrl + K
             </div>
             <p className="mt-1 text-[11px] leading-relaxed text-[var(--text-muted)]">
-              Buka command palette: lompat halaman, tambah klien, atau cari proyek dengan cepat.
+              Buka command palette. Tekan <span className="font-mono">?</span> untuk daftar shortcut keyboard (g+c, g+p, dll).
             </p>
           </div>
         ) : (

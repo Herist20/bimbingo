@@ -4,6 +4,7 @@ import { Sidebar } from '@/components/shared/sidebar';
 import { SidebarProvider } from '@/components/shared/sidebar-context';
 import { Topbar } from '@/components/shared/topbar';
 import { CommandPalette } from '@/components/shared/command-palette';
+import { KeyboardShortcuts } from '@/components/shared/keyboard-shortcuts';
 
 export default async function DashboardLayout({
   children,
@@ -43,6 +44,7 @@ export default async function DashboardLayout({
           </main>
         </div>
         <CommandPalette />
+        <KeyboardShortcuts />
       </div>
     </SidebarProvider>
   );
