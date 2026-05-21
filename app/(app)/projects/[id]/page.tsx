@@ -4,6 +4,7 @@ import { ArrowLeft, CreditCard, FolderOpen, KanbanSquare, PencilLine } from 'luc
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { PageHeader } from '@/components/shared/page-header';
 import { ProjectStatusBadge } from '@/components/projects/project-status-badge';
 import { MilestoneEditor } from '@/components/projects/milestone-editor';
 import { LecturerAssignments } from '@/components/projects/lecturer-assignments';
@@ -28,58 +29,66 @@ export default async function ProjectDetailPage({
   const customFields = cfResult.ok ? cfResult.data.filter((f) => !f.archived_at) : [];
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="mx-auto flex max-w-6xl flex-col gap-6">
       <Link
         href="/projects"
-        className="inline-flex items-center gap-1 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+        className="inline-flex w-fit items-center gap-1 text-xs font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="h-3.5 w-3.5" />
         Daftar proyek
       </Link>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">{project.title}</h1>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--text-secondary)]">
+      <PageHeader
+        kicker={
+          project.client
+            ? `Proyek · ${project.client.full_name}`
+            : 'Proyek skripsi'
+        }
+        title={project.title}
+        description={project.description ?? undefined}
+        meta={
+          <>
             <ProjectStatusBadge status={project.status} />
-            <span>{(PROJECT_TYPE_LABEL as Record<string, string>)[project.type] ?? project.type}</span>
-            {project.client ? (
-              <>
-                <span>·</span>
-                <Link href={`/clients/${project.client.id}`} className="hover:underline">
-                  {project.client.full_name}
-                </Link>
-              </>
+            <span className="chip">
+              {(PROJECT_TYPE_LABEL as Record<string, string>)[project.type] ?? project.type}
+            </span>
+            {project.target_end_date ? (
+              <span className="chip">
+                Target {formatTanggalRelatif(project.target_end_date)}
+              </span>
             ) : null}
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild>
-            <Link href={`/projects/${project.id}/board`}>
-              <KanbanSquare className="h-4 w-4" />
-              Board task
-            </Link>
-          </Button>
-          <Button asChild variant="secondary">
-            <Link href={`/projects/${project.id}/files`}>
-              <FolderOpen className="h-4 w-4" />
-              File
-            </Link>
-          </Button>
-          <Button asChild variant="secondary">
-            <Link href={`/projects/${project.id}/finance`}>
-              <CreditCard className="h-4 w-4" />
-              Finance
-            </Link>
-          </Button>
-          <Button asChild variant="secondary">
-            <Link href={`/projects/${project.id}/edit`}>
-              <PencilLine className="h-4 w-4" />
-              Edit
-            </Link>
-          </Button>
-        </div>
-      </div>
+            <span className="chip chip-brand">{progress_percent}% selesai</span>
+          </>
+        }
+        actions={
+          <>
+            <Button asChild>
+              <Link href={`/projects/${project.id}/board`}>
+                <KanbanSquare className="h-4 w-4" />
+                Board
+              </Link>
+            </Button>
+            <Button asChild variant="secondary">
+              <Link href={`/projects/${project.id}/files`}>
+                <FolderOpen className="h-4 w-4" />
+                Berkas
+              </Link>
+            </Button>
+            <Button asChild variant="secondary">
+              <Link href={`/projects/${project.id}/finance`}>
+                <CreditCard className="h-4 w-4" />
+                Keuangan
+              </Link>
+            </Button>
+            <Button asChild variant="secondary">
+              <Link href={`/projects/${project.id}/edit`}>
+                <PencilLine className="h-4 w-4" />
+                Edit
+              </Link>
+            </Button>
+          </>
+        }
+      />
 
       <div className="grid gap-4 md:grid-cols-4">
         <Stat label="Nilai kontrak" value={formatRupiah(project.total_value)} />

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FilesSection } from '@/components/files/files-section';
+import { PageHeader } from '@/components/shared/page-header';
 import { getProject } from '@/lib/actions/projects';
 import { listFilesByProject } from '@/lib/actions/files';
 
@@ -24,27 +25,33 @@ export default async function ProjectFilesPage({
   const files = filesResult.ok ? filesResult.data : [];
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="mx-auto flex max-w-5xl flex-col gap-6">
       <Link
         href={`/projects/${id}`}
-        className="inline-flex items-center gap-1 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+        className="inline-flex w-fit items-center gap-1 text-xs font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="h-3.5 w-3.5" />
         Detail proyek
       </Link>
 
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{project.title}</h1>
-        <p className="text-sm text-[var(--text-secondary)]">
-          Arsip dokumen: draf bab, referensi, bukti bayar, dan administrasi.
-        </p>
-      </div>
+      <PageHeader
+        kicker={`Berkas · ${project.title}`}
+        title="Arsip dokumen"
+        description="Draf bab, referensi, bukti bayar, administrasi. File disimpan privat di Supabase Storage — download via signed URL (kadaluarsa 1 jam)."
+        meta={
+          <>
+            <span className="chip chip-brand">{files.length} berkas</span>
+            <span className="chip">Private bucket</span>
+            <span className="chip">Signed URL · 1 jam</span>
+          </>
+        }
+      />
 
       <Card>
         <CardHeader>
-          <CardTitle>Upload & arsip</CardTitle>
+          <CardTitle className="font-display text-base">Upload & arsip</CardTitle>
           <CardDescription>
-            File disimpan privat di Supabase Storage. URL download di-sign 1 jam.
+            Drag file ke area upload, atau klik pilih dari komputer. Tipe apa saja diterima.
           </CardDescription>
         </CardHeader>
         <CardContent>
