@@ -29,12 +29,17 @@ export function MobileSidebar() {
       </SheetTrigger>
       <SheetContent side="left" className="w-64 p-4">
         <SheetHeader className="mb-6">
-          <SheetTitle className="flex items-center gap-2">
-            <span className="h-6 w-6 rounded-md bg-[var(--brand)]" aria-hidden />
-            Bimbingo
+          <SheetTitle className="flex items-center gap-2.5">
+            <span
+              aria-hidden
+              className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--brand)] text-[var(--bg-base)]"
+            >
+              <span className="font-display text-sm font-semibold">B</span>
+            </span>
+            <span className="font-display text-base font-semibold tracking-tight">Bimbingo</span>
           </SheetTitle>
         </SheetHeader>
-        <SidebarNav onNavigate={() => setOpen(false)} />
+        <SidebarNav onNavigate={() => setOpen(false)} forceExpanded />
       </SheetContent>
     </Sheet>
   );

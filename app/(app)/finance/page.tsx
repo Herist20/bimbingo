@@ -1,5 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { GlobalPaymentsTable } from '@/components/payments/global-payments-table';
+import { PageHeader } from '@/components/shared/page-header';
+import { OnboardingHint } from '@/components/shared/onboarding-hint';
 import { listPaymentsRange, summarizeFinance } from '@/lib/actions/payments';
 import { formatRupiah } from '@/lib/format';
 import { PAYMENT_METHOD_LABEL, type PaymentMethod } from '@/lib/schemas/payment';
@@ -55,31 +57,48 @@ export default async function FinanceGlobalPage() {
   const maxMonth = byMonth.reduce((m, p) => Math.max(m, p.total), 0);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Finance</h1>
-        <p className="text-sm text-[var(--text-secondary)]">
-          Ringkasan keuangan lintas proyek. Data hanya menampilkan pembayaran yang sudah dicatat.
-        </p>
-      </div>
+    <div className="mx-auto flex max-w-7xl flex-col gap-6">
+      <PageHeader
+        kicker="Operasional · Keuangan"
+        title="Ringkasan kas"
+        description="Data dihitung dari pembayaran tercatat per proyek. Untuk catat transaksi baru, masuk ke tab Keuangan di detail proyek."
+        meta={
+          <>
+            <span className="chip chip-brand">{formatRupiah(monthTotal)} bulan ini</span>
+            <span className="chip">{payments.length} transaksi 12 bulan</span>
+          </>
+        }
+      />
+
+      <OnboardingHint
+        storageKey="finance-intro"
+        title="Cara mencatat termin"
+        description="Pembayaran dicatat per proyek: buka detail proyek → tab Keuangan → Catat pembayaran. Verifikasi-kan jika bukti sudah cocok dengan mutasi rekening."
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardDescription>Pendapatan Bulan Ini</CardDescription>
-            <CardTitle className="text-2xl">{formatRupiah(monthTotal)}</CardTitle>
+            <CardDescription className="text-[11px] uppercase tracking-[0.12em]">
+              Pendapatan bulan ini
+            </CardDescription>
+            <CardTitle className="font-display text-3xl">{formatRupiah(monthTotal)}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader>
-            <CardDescription>Pendapatan YTD</CardDescription>
-            <CardTitle className="text-2xl">{formatRupiah(ytdTotal)}</CardTitle>
+            <CardDescription className="text-[11px] uppercase tracking-[0.12em]">
+              Pendapatan YTD
+            </CardDescription>
+            <CardTitle className="font-display text-3xl">{formatRupiah(ytdTotal)}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader>
-            <CardDescription>Transaksi 12 Bulan</CardDescription>
-            <CardTitle className="text-2xl">{payments.length}</CardTitle>
+            <CardDescription className="text-[11px] uppercase tracking-[0.12em]">
+              Transaksi 12 bulan
+            </CardDescription>
+            <CardTitle className="font-display text-3xl">{payments.length}</CardTitle>
           </CardHeader>
         </Card>
       </div>

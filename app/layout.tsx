@@ -1,12 +1,18 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { Bricolage_Grotesque, Hanken_Grotesk, JetBrains_Mono } from 'next/font/google';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/shared/theme-provider';
 import './globals.css';
 
-const inter = Inter({
+const hankenGrotesk = Hanken_Grotesk({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-sans-grotesk',
+  display: 'swap',
+});
+
+const bricolageGrotesque = Bricolage_Grotesque({
+  subsets: ['latin'],
+  variable: '--font-display',
   display: 'swap',
 });
 
@@ -44,7 +50,7 @@ export default function RootLayout({
     <html
       lang="id"
       suppressHydrationWarning
-      className={`${inter.variable} ${jetbrainsMono.variable}`}
+      className={`${hankenGrotesk.variable} ${bricolageGrotesque.variable} ${jetbrainsMono.variable}`}
     >
       <head>
         {/* Anti-flash: set data-theme sebelum React hydrate */}

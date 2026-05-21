@@ -314,29 +314,39 @@ export function ClientsTable({ data, customFields: initialCustomFields = [] }: C
           <div
             role="tablist"
             aria-label="Filter status klien"
-            className="inline-flex rounded-md border p-0.5"
+            className="inline-flex h-10 items-center gap-0.5 rounded-md border bg-[var(--bg-base)] p-1"
             style={{ borderColor: 'var(--border-strong)' }}
           >
-            {STATUS_OPTIONS.map((opt) => (
-              <button
-                key={opt.key}
-                type="button"
-                role="tab"
-                aria-selected={statusFilter === opt.key}
-                onClick={() => setStatusFilter(opt.key)}
-                className={cn(
-                  'rounded-sm px-2.5 py-1 text-xs font-medium transition-colors',
-                  statusFilter === opt.key
-                    ? 'bg-[var(--brand-soft)] text-[var(--brand)]'
-                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-muted)]',
-                )}
-              >
-                {opt.label}
-                <span className="ml-1 text-[10px] text-[var(--text-muted)]">
-                  {counts[opt.key]}
-                </span>
-              </button>
-            ))}
+            {STATUS_OPTIONS.map((opt) => {
+              const selected = statusFilter === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={selected}
+                  onClick={() => setStatusFilter(opt.key)}
+                  className={cn(
+                    'inline-flex h-8 items-center gap-1.5 rounded-sm px-3 text-sm font-medium transition-all',
+                    selected
+                      ? 'bg-[var(--brand-soft)] text-[var(--brand-ink)] shadow-[var(--shadow-card)]'
+                      : 'text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)] hover:text-[var(--text-primary)]',
+                  )}
+                >
+                  <span>{opt.label}</span>
+                  <span
+                    className={cn(
+                      'inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-[10px] font-semibold tabular-nums',
+                      selected
+                        ? 'bg-[var(--brand)] text-white'
+                        : 'bg-[var(--bg-muted)] text-[var(--text-muted)]',
+                    )}
+                  >
+                    {counts[opt.key]}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
         <div className="flex items-center gap-2">

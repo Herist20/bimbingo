@@ -1,35 +1,52 @@
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { FolderKanban, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProjectsTable } from '@/components/projects/projects-table';
-import { AddFieldButton } from '@/components/custom-fields/add-field-button';
+import { PageHeader } from '@/components/shared/page-header';
+import { EmptyState } from '@/components/shared/empty-state';
+import { OnboardingHint } from '@/components/shared/onboarding-hint';
 import { listProjects } from '@/lib/actions/projects';
+import { listCustomFields } from '@/lib/actions/custom-fields';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ProjectsPage() {
-  const result = await listProjects();
+  const [result, cfResult] = await Promise.all([
+    listProjects(),
+    listCustomFields('project'),
+  ]);
+  const customFields = cfResult.ok ? cfResult.data : [];
+  const totalCount = result.ok ? result.data.length : 0;
+  const activeCount = result.ok ? result.data.filter((p) => p.status === 'active').length : 0;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Proyek</h1>
-          <p className="text-sm text-[var(--text-secondary)]">
-            Daftar proyek skripsi yang sedang & sudah dikerjakan.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <AddFieldButton entityType="project" />
+    <div className="mx-auto flex max-w-7xl flex-col gap-6">
+      <PageHeader
+        kicker="Data · Proyek"
+        title="Proyek skripsi"
+        description="Setiap proyek memuat milestone bab, board task, file, dan pembayaran. Buat baru dari sini atau lompat ke board lewat menu kebab di baris."
+        meta={
+          <>
+            <span className="chip chip-brand">{activeCount} aktif</span>
+            <span className="chip">{totalCount} total</span>
+          </>
+        }
+        actions={
           <Button asChild>
             <Link href="/projects/new">
               <Plus className="h-4 w-4" />
               Tambah proyek
             </Link>
           </Button>
-        </div>
-      </div>
+        }
+      />
+
+      <OnboardingHint
+        storageKey="projects-intro"
+        title="Alur kerja proyek"
+        description="Setelah membuat proyek: isi milestone bab (Bab 1-5 + Sidang) → buka tab Board untuk drag task → tab Keuangan untuk catat termin pembayaran."
+      />
 
       {!result.ok ? (
         <Card>
@@ -39,25 +56,26 @@ export default async function ProjectsPage() {
           </CardHeader>
         </Card>
       ) : result.data.length === 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Belum ada proyek</CardTitle>
-            <CardDescription>
-              Buat proyek pertama. Pilih klien, isi judul & nilai kontrak, sistem akan
-              generate 6 bab default jika diinginkan.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <EmptyState
+          icon={FolderKanban}
+          title="Belum ada proyek"
+          description="Buat proyek pertama: pilih klien, isi judul + nilai kontrak. Sistem auto-generate 6 milestone default (Bab 1-5 + Sidang)."
+          steps={[
+            { label: 'Pastikan klien sudah terdaftar', description: 'Buka /clients jika belum.' },
+            { label: 'Klik Tambah proyek', description: 'Pilih klien, isi judul, nilai kontrak.' },
+            { label: 'Kerjakan via Board', description: 'Drag task antar kolom kanban.' },
+          ]}
+          action={
             <Button asChild>
               <Link href="/projects/new">
                 <Plus className="h-4 w-4" />
                 Tambah proyek pertama
               </Link>
             </Button>
-          </CardContent>
-        </Card>
+          }
+        />
       ) : (
-        <ProjectsTable data={result.data} />
+        <ProjectsTable data={result.data} customFields={customFields} />
       )}
     </div>
   );

@@ -1,35 +1,46 @@
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { GraduationCap, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LecturersTable } from '@/components/lecturers/lecturers-table';
-import { AddFieldButton } from '@/components/custom-fields/add-field-button';
+import { PageHeader } from '@/components/shared/page-header';
+import { EmptyState } from '@/components/shared/empty-state';
+import { OnboardingHint } from '@/components/shared/onboarding-hint';
 import { listLecturers } from '@/lib/actions/lecturers';
+import { listCustomFields } from '@/lib/actions/custom-fields';
 
 export const dynamic = 'force-dynamic';
 
 export default async function LecturersPage() {
-  const result = await listLecturers();
+  const [result, cfResult] = await Promise.all([
+    listLecturers(),
+    listCustomFields('lecturer'),
+  ]);
+  const customFields = cfResult.ok ? cfResult.data : [];
+  const totalCount = result.ok ? result.data.length : 0;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Dosen</h1>
-          <p className="text-sm text-[var(--text-secondary)]">
-            Daftar dosen pembimbing & penguji. Catat karakteristik untuk profiling.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <AddFieldButton entityType="lecturer" />
+    <div className="mx-auto flex max-w-7xl flex-col gap-6">
+      <PageHeader
+        kicker="Data · Dosen"
+        title="Pembimbing & penguji"
+        description="Catat karakteristik dosen (suka revisi format, suka topik kuantitatif, dll) untuk profiling. Berguna saat assign ke proyek baru."
+        meta={<span className="chip chip-brand">{totalCount} dosen tercatat</span>}
+        actions={
           <Button asChild>
             <Link href="/lecturers/new">
               <Plus className="h-4 w-4" />
               Tambah dosen
             </Link>
           </Button>
-        </div>
-      </div>
+        }
+      />
+
+      <OnboardingHint
+        storageKey="lecturers-intro"
+        title="Kenapa profiling dosen?"
+        description="Field 'Karakteristik' dan 'Tag' membantu mahasiswa baru menyesuaikan style nulis. Mis. 'suka margin 1.5cm', 'kuat di kualitatif', 'biasanya minta tatap muka Selasa'."
+      />
 
       {!result.ok ? (
         <Card>
@@ -39,24 +50,26 @@ export default async function LecturersPage() {
           </CardHeader>
         </Card>
       ) : result.data.length === 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Belum ada dosen</CardTitle>
-            <CardDescription>
-              Mulai dengan menambah dosen pertama. Data ini akan dipakai saat membuat proyek.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <EmptyState
+          icon={GraduationCap}
+          title="Belum ada dosen"
+          description="Daftarkan dosen yang sering muncul di kampus target. Data ini bisa di-pilih cepat saat assign pembimbing/penguji proyek baru."
+          steps={[
+            { label: 'Tambah dosen', description: 'Nama, gelar, kampus, fakultas.' },
+            { label: 'Catat karakteristik', description: 'Tips praktis dari pengalaman bimbingan.' },
+            { label: 'Tag untuk filter', description: 'Mis. tag “kualitatif”, “revisi keras”.' },
+          ]}
+          action={
             <Button asChild>
               <Link href="/lecturers/new">
                 <Plus className="h-4 w-4" />
                 Tambah dosen pertama
               </Link>
             </Button>
-          </CardContent>
-        </Card>
+          }
+        />
       ) : (
-        <LecturersTable data={result.data} />
+        <LecturersTable data={result.data} customFields={customFields} />
       )}
     </div>
   );
