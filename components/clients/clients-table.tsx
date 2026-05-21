@@ -79,14 +79,25 @@ export function ClientsTable({ data, customFields: initialCustomFields = [] }: C
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('active');
+  const [universityFilter, setUniversityFilter] = React.useState<string>('');
   const [pending, startTransition] = React.useTransition();
   const [customFields, setCustomFields] = React.useState<CustomFieldRow[]>(initialCustomFields);
   const [rowSelection, setRowSelection] = React.useState<Record<string, boolean>>({});
 
   React.useEffect(() => setCustomFields(initialCustomFields), [initialCustomFields]);
 
-  // Reset selection saat filter status berubah supaya hidden row tidak terselected
-  React.useEffect(() => setRowSelection({}), [statusFilter]);
+  // Reset selection saat filter status / kampus berubah supaya hidden row tidak terselected
+  React.useEffect(() => setRowSelection({}), [statusFilter, universityFilter]);
+
+  // Distinct universities dari data, sorted ascending, exclude empty
+  const universities = React.useMemo(() => {
+    const set = new Set<string>();
+    for (const c of data) {
+      const u = c.university?.trim();
+      if (u) set.add(u);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'id'));
+  }, [data]);
 
   const defaultVisibility = React.useMemo(() => {
     const map = { ...BUILTIN_DEFAULTS };
@@ -102,10 +113,14 @@ export function ClientsTable({ data, customFields: initialCustomFields = [] }: C
   );
 
   const filteredByStatus = React.useMemo(() => {
-    if (statusFilter === 'all') return data;
-    if (statusFilter === 'archived') return data.filter((c) => c.archived_at !== null);
-    return data.filter((c) => c.archived_at === null);
-  }, [data, statusFilter]);
+    let rows = data;
+    if (statusFilter === 'archived') rows = rows.filter((c) => c.archived_at !== null);
+    else if (statusFilter === 'active') rows = rows.filter((c) => c.archived_at === null);
+    if (universityFilter) {
+      rows = rows.filter((c) => (c.university ?? '').trim() === universityFilter);
+    }
+    return rows;
+  }, [data, statusFilter, universityFilter]);
 
   const counts = React.useMemo(
     () => ({
@@ -434,6 +449,33 @@ export function ClientsTable({ data, customFields: initialCustomFields = [] }: C
               );
             })}
           </div>
+          {universities.length > 0 ? (
+            <select
+              value={universityFilter}
+              onChange={(e) => setUniversityFilter(e.target.value)}
+              aria-label="Filter kampus"
+              className="h-10 rounded-md border bg-[var(--bg-base)] px-3 text-sm sm:max-w-[14rem]"
+              style={{ borderColor: 'var(--border-strong)' }}
+            >
+              <option value="">Semua kampus</option>
+              {universities.map((u) => (
+                <option key={u} value={u}>
+                  {u}
+                </option>
+              ))}
+            </select>
+          ) : null}
+          {universityFilter ? (
+            <button
+              type="button"
+              onClick={() => setUniversityFilter('')}
+              className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-[11px] font-medium text-[var(--text-muted)] hover:bg-[var(--bg-muted)] hover:text-[var(--text-primary)]"
+              aria-label="Bersihkan filter kampus"
+            >
+              <X className="h-3 w-3" />
+              Bersihkan kampus
+            </button>
+          ) : null}
         </div>
         <div className="flex items-center gap-2">
           <ColumnManager
