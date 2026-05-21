@@ -19,6 +19,7 @@ import { Reveal } from '@/components/landing/reveal';
 import { Marquee } from '@/components/landing/marquee';
 import { Faq } from '@/components/landing/faq';
 import { HeroMock } from '@/components/landing/hero-mock';
+import { ThemeToggle } from '@/components/shared/theme-toggle';
 
 const NAV = [
   { label: 'Fitur', href: '#fitur' },
@@ -721,7 +722,8 @@ function TopNav() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <ThemeToggle />
           <Button asChild variant="ghost" size="sm">
             <Link href="/login">Masuk</Link>
           </Button>
