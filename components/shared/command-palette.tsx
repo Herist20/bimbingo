@@ -18,11 +18,13 @@ import {
   FolderKanban,
   GraduationCap,
   LayoutDashboard,
+  Loader2,
   Plus,
   Settings,
   Sparkles,
   Users,
 } from 'lucide-react';
+import { globalSearch, type SearchHit } from '@/lib/actions/search';
 
 export const CMDK_OPEN_EVENT = 'bimbingo:cmdk-open';
 
@@ -48,9 +50,28 @@ const QUICK_ACTIONS: NavTarget[] = [
   { label: 'Tambah dosen', href: '/lecturers/new', icon: Plus, hint: 'Daftarkan dosen pembimbing/penguji' },
 ];
 
+const HIT_ICON: Record<SearchHit['kind'], React.ComponentType<{ className?: string }>> = {
+  client: Users,
+  project: FolderKanban,
+  lecturer: GraduationCap,
+};
+
+const HIT_GROUP_LABEL: Record<SearchHit['kind'], string> = {
+  client: 'Klien',
+  project: 'Proyek',
+  lecturer: 'Dosen',
+};
+
+const DEBOUNCE_MS = 250;
+
 export function CommandPalette() {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
+  const [query, setQuery] = React.useState('');
+  const [hits, setHits] = React.useState<SearchHit[]>([]);
+  const [truncated, setTruncated] = React.useState(false);
+  const [searching, setSearching] = React.useState(false);
+  const requestIdRef = React.useRef(0);
 
   React.useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -71,10 +92,54 @@ export function CommandPalette() {
     };
   }, []);
 
+  // Reset state saat palette ditutup.
+  React.useEffect(() => {
+    if (!open) {
+      setQuery('');
+      setHits([]);
+      setTruncated(false);
+      setSearching(false);
+    }
+  }, [open]);
+
+  // Debounced server search.
+  React.useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) {
+      setHits([]);
+      setTruncated(false);
+      setSearching(false);
+      return;
+    }
+    setSearching(true);
+    const reqId = ++requestIdRef.current;
+    const timer = window.setTimeout(async () => {
+      const result = await globalSearch(q);
+      if (reqId !== requestIdRef.current) return; // stale response
+      if (result.ok) {
+        setHits(result.data.hits);
+        setTruncated(result.data.truncated);
+      } else {
+        setHits([]);
+        setTruncated(false);
+      }
+      setSearching(false);
+    }, DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [query]);
+
   function go(href: string) {
     setOpen(false);
     router.push(href);
   }
+
+  const grouped = React.useMemo(() => {
+    const g: Record<SearchHit['kind'], SearchHit[]> = { client: [], project: [], lecturer: [] };
+    for (const h of hits) g[h.kind].push(h);
+    return g;
+  }, [hits]);
+
+  const hasQuery = query.trim().length >= 2;
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
@@ -86,10 +151,68 @@ export function CommandPalette() {
           aria-describedby={undefined}
         >
           <DialogPrimitive.Title className="sr-only">Command palette</DialogPrimitive.Title>
-          <Command shouldFilter>
-            <CommandInput placeholder="Cari halaman, klien, aksi…" autoFocus />
+          <Command shouldFilter={!hasQuery}>
+            <div className="relative">
+              <CommandInput
+                placeholder="Cari klien, proyek, dosen, atau halaman…"
+                value={query}
+                onValueChange={setQuery}
+                autoFocus
+              />
+              {searching ? (
+                <Loader2 className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-[var(--text-muted)]" />
+              ) : null}
+            </div>
             <CommandList className="max-h-[60vh] py-2">
-              <CommandEmpty>Tidak ada hasil. Coba kata lain.</CommandEmpty>
+              <CommandEmpty>
+                {hasQuery
+                  ? searching
+                    ? 'Mencari…'
+                    : 'Tidak ada hasil. Coba kata lain.'
+                  : 'Mulai ketik untuk cari klien, proyek, atau dosen.'}
+              </CommandEmpty>
+
+              {hasQuery && hits.length > 0 ? (
+                <>
+                  {(['client', 'project', 'lecturer'] as const).map((kind) => {
+                    const list = grouped[kind];
+                    if (list.length === 0) return null;
+                    const HitIcon = HIT_ICON[kind];
+                    return (
+                      <CommandGroup key={kind} heading={HIT_GROUP_LABEL[kind]}>
+                        {list.map((hit) => (
+                          <CommandItem
+                            key={hit.id}
+                            value={`${hit.kind}-${hit.id}-${hit.label}-${hit.hint ?? ''}`}
+                            onSelect={() => go(hit.href)}
+                            className="gap-3"
+                          >
+                            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--accent-soft)] text-[var(--accent)]">
+                              <HitIcon className="h-3.5 w-3.5" />
+                            </span>
+                            <span className="flex min-w-0 flex-1 flex-col">
+                              <span className="truncate text-sm">{hit.label}</span>
+                              {hit.hint ? (
+                                <span className="truncate text-[11px] text-[var(--text-muted)]">
+                                  {hit.hint}
+                                </span>
+                              ) : null}
+                            </span>
+                            <ArrowRight className="h-3.5 w-3.5 text-[var(--text-muted)]" />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    );
+                  })}
+                  {truncated ? (
+                    <p className="px-3 py-1 text-[10px] text-[var(--text-muted)]">
+                      Sebagian hasil dipotong. Persempit kata kunci untuk lebih relevan.
+                    </p>
+                  ) : null}
+                  <CommandSeparator />
+                </>
+              ) : null}
+
               <CommandGroup heading="Lompat ke">
                 {NAV_TARGETS.map((t) => {
                   const Icon = t.icon;
