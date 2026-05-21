@@ -8,6 +8,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { LoginForm } from './_components/login-form';
+import { ThemeToggle } from '@/components/shared/theme-toggle';
 
 const HIGHLIGHTS = [
   {
@@ -50,14 +51,17 @@ export default function LoginPage({
             <ArrowLeft className="h-3.5 w-3.5" />
             Beranda
           </Link>
-          <Link
-            href="https://github.com/Herist20/bimbingo"
-            target="_blank"
-            rel="noreferrer"
-            className="hidden text-xs font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)] sm:block"
-          >
-            Lihat repo →
-          </Link>
+          <div className="flex items-center gap-1">
+            <Link
+              href="https://github.com/Herist20/bimbingo"
+              target="_blank"
+              rel="noreferrer"
+              className="hidden text-xs font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)] sm:block"
+            >
+              Lihat repo →
+            </Link>
+            <ThemeToggle />
+          </div>
         </div>
 
         <div className="flex flex-1 items-center">
