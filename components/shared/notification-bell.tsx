@@ -13,11 +13,13 @@ import {
   Clock,
   Coins,
   Loader2,
+  MessageCircle,
   X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getUrgentItems, type UrgentItem, type UrgentSeverity } from '@/lib/actions/notifications';
+import { WA_TEMPLATES, normalizeWhatsApp, waLink } from '@/lib/whatsapp';
 
 const POLL_INTERVAL_MS = 60_000;
 
@@ -65,6 +67,46 @@ const TYPE_GROUP_LABEL: Record<UrgentItem['type'], string> = {
   'project-stale': 'Proyek diam',
   'payment-overdue': 'Piutang lewat',
 };
+
+function WaQuickAction({ item }: { item: UrgentItem }) {
+  const phone = item.client?.whatsapp ?? null;
+  const normalized = normalizeWhatsApp(phone);
+  if (!normalized || normalized.length < 10 || !item.client?.name) return null;
+
+  // Pilih template berdasar tipe notif.
+  const templateKey: keyof typeof WA_TEMPLATES =
+    item.type === 'payment-overdue'
+      ? 'payment'
+      : item.type === 'deadline-overdue' || item.type === 'deadline-soon'
+        ? 'deadline'
+        : 'followup';
+
+  const message = WA_TEMPLATES[templateKey].build({
+    clientName: item.client.name,
+    projectTitle: item.project?.title,
+    daysToDeadline:
+      item.type === 'deadline-overdue' || item.type === 'deadline-soon'
+        ? item.daysFromToday
+        : undefined,
+    outstanding: item.project?.outstanding,
+  });
+  const url = waLink({ phone, message });
+  if (!url) return null;
+
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e) => e.stopPropagation()}
+      aria-label={`Chat WhatsApp ${item.client.name}`}
+      title={`Kirim reminder via WhatsApp ke ${item.client.name}`}
+      className="inline-flex h-5 w-5 items-center justify-center rounded text-[var(--success)] hover:bg-[var(--success-soft)]"
+    >
+      <MessageCircle className="h-3 w-3" />
+    </a>
+  );
+}
 
 export function NotificationBell() {
   const router = useRouter();
@@ -259,17 +301,20 @@ export function NotificationBell() {
                             </span>
                             <ChevronRight className="mt-1 h-3.5 w-3.5 shrink-0 text-[var(--text-muted)] opacity-0 transition-opacity group-hover:opacity-100" />
                           </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              dismissItem(it.id);
-                            }}
-                            aria-label={`Tandai dibaca: ${it.title}`}
-                            className="absolute right-2 top-2 inline-flex h-5 w-5 items-center justify-center rounded text-[var(--text-muted)] opacity-0 transition-opacity hover:bg-[var(--bg-muted)] hover:text-[var(--text-primary)] group-hover:opacity-100"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
+                          <div className="absolute right-2 top-2 flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                            <WaQuickAction item={it} />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                dismissItem(it.id);
+                              }}
+                              aria-label={`Tandai dibaca: ${it.title}`}
+                              className="inline-flex h-5 w-5 items-center justify-center rounded text-[var(--text-muted)] hover:bg-[var(--bg-muted)] hover:text-[var(--text-primary)]"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
                         </li>
                       ))}
                     </ul>

@@ -17,6 +17,16 @@ export interface UrgentItem {
   daysFromToday: number;
   /** Reference timestamp (deadline atau updated_at). */
   refAt: string;
+  /** Konteks klien untuk quick WA action. Optional. */
+  client?: {
+    name: string;
+    whatsapp: string | null;
+  };
+  /** Konteks proyek (judul + outstanding) untuk template WA. */
+  project?: {
+    title: string;
+    outstanding?: number;
+  };
 }
 
 export interface UrgentPayload {
@@ -54,31 +64,40 @@ export async function getUrgentItems(): Promise<ActionResult<UrgentPayload>> {
     outstandingCutoff.setDate(outstandingCutoff.getDate() - OUTSTANDING_DAYS);
 
     const [tasksRes, staleRes, projectsRes, financeRes] = await Promise.all([
-      // Task overdue + deadline ≤ 7 hari
+      // Task overdue + deadline ≤ 7 hari (include client via project)
       supabase
         .from('tasks')
         .select(`
           id, title, due_date, status, project_id,
-          project:projects!inner(id, title, status, archived_at)
+          project:projects!inner(
+            id, title, status, archived_at,
+            client:clients!inner(full_name, whatsapp)
+          )
         `)
         .neq('status', 'done')
         .not('due_date', 'is', null)
         .lte('due_date', inSevenDays)
         .order('due_date', { ascending: true })
         .limit(20),
-      // Proyek stale > 5 hari
+      // Proyek stale > 5 hari (include client)
       supabase
         .from('projects')
-        .select('id, title, updated_at, status, archived_at, total_value, start_date')
+        .select(`
+          id, title, updated_at, status, archived_at, total_value, start_date,
+          client:clients!inner(full_name, whatsapp)
+        `)
         .is('archived_at', null)
         .eq('status', 'active')
         .lt('updated_at', staleCutoff.toISOString())
         .order('updated_at', { ascending: true })
         .limit(10),
-      // Proyek aktif yang start_date > 30 hari (untuk hitung outstanding overdue)
+      // Proyek aktif yang start_date > 30 hari (include client untuk WA piutang)
       supabase
         .from('projects')
-        .select('id, title, status, archived_at, start_date')
+        .select(`
+          id, title, status, archived_at, start_date,
+          client:clients!inner(full_name, whatsapp)
+        `)
         .is('archived_at', null)
         .eq('status', 'active')
         .not('start_date', 'is', null)
@@ -98,7 +117,13 @@ export async function getUrgentItems(): Promise<ActionResult<UrgentPayload>> {
     // 1. Task deadlines
     for (const t of tasksRes.data ?? []) {
       const proj = (t as unknown as {
-        project?: { id: string; title: string; status: string; archived_at: string | null };
+        project?: {
+          id: string;
+          title: string;
+          status: string;
+          archived_at: string | null;
+          client?: { full_name?: string; whatsapp?: string | null };
+        };
       }).project;
       if (!proj || proj.archived_at || proj.status !== 'active') continue;
       if (!t.due_date) continue;
@@ -118,12 +143,20 @@ export async function getUrgentItems(): Promise<ActionResult<UrgentPayload>> {
         href: `/projects/${proj.id}/board`,
         daysFromToday: days,
         refAt: t.due_date,
+        client: proj.client
+          ? {
+              name: proj.client.full_name ?? '',
+              whatsapp: proj.client.whatsapp ?? null,
+            }
+          : undefined,
+        project: { title: proj.title },
       });
     }
 
     // 2. Stale projects
     for (const p of staleRes.data ?? []) {
       const daysSince = Math.abs(diffDays(p.updated_at.slice(0, 10)));
+      const client = (p as unknown as { client?: { full_name?: string; whatsapp?: string | null } }).client;
       items.push({
         id: `project-stale:${p.id}`,
         type: 'project-stale',
@@ -133,6 +166,10 @@ export async function getUrgentItems(): Promise<ActionResult<UrgentPayload>> {
         href: `/projects/${p.id}`,
         daysFromToday: -daysSince,
         refAt: p.updated_at,
+        client: client
+          ? { name: client.full_name ?? '', whatsapp: client.whatsapp ?? null }
+          : undefined,
+        project: { title: p.title },
       });
     }
 
@@ -144,6 +181,7 @@ export async function getUrgentItems(): Promise<ActionResult<UrgentPayload>> {
       const outstanding = financeMap.get(p.id) ?? 0;
       if (outstanding <= 0 || !p.start_date) continue;
       const daysSinceStart = Math.abs(diffDays(p.start_date));
+      const client = (p as unknown as { client?: { full_name?: string; whatsapp?: string | null } }).client;
       items.push({
         id: `payment-overdue:${p.id}`,
         type: 'payment-overdue',
@@ -153,6 +191,10 @@ export async function getUrgentItems(): Promise<ActionResult<UrgentPayload>> {
         href: `/projects/${p.id}/finance`,
         daysFromToday: -daysSinceStart,
         refAt: p.start_date,
+        client: client
+          ? { name: client.full_name ?? '', whatsapp: client.whatsapp ?? null }
+          : undefined,
+        project: { title: p.title, outstanding },
       });
     }
 
