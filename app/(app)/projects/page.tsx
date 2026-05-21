@@ -6,6 +6,7 @@ import { ProjectsTable } from '@/components/projects/projects-table';
 import { PageHeader } from '@/components/shared/page-header';
 import { EmptyState } from '@/components/shared/empty-state';
 import { OnboardingHint } from '@/components/shared/onboarding-hint';
+import { ExportButton } from '@/components/shared/export-button';
 import { listProjects } from '@/lib/actions/projects';
 import { listCustomFields } from '@/lib/actions/custom-fields';
 
@@ -33,12 +34,15 @@ export default async function ProjectsPage() {
           </>
         }
         actions={
-          <Button asChild>
-            <Link href="/projects/new">
-              <Plus className="h-4 w-4" />
-              Tambah proyek
-            </Link>
-          </Button>
+          <>
+            <ExportButton entity="projects" />
+            <Button asChild>
+              <Link href="/projects/new">
+                <Plus className="h-4 w-4" />
+                Tambah proyek
+              </Link>
+            </Button>
+          </>
         }
       />
 

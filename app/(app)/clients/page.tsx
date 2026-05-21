@@ -6,6 +6,7 @@ import { ClientsTable } from '@/components/clients/clients-table';
 import { PageHeader } from '@/components/shared/page-header';
 import { EmptyState } from '@/components/shared/empty-state';
 import { OnboardingHint } from '@/components/shared/onboarding-hint';
+import { ExportButton } from '@/components/shared/export-button';
 import { listClients } from '@/lib/actions/clients';
 import { listCustomFields } from '@/lib/actions/custom-fields';
 
@@ -33,12 +34,15 @@ export default async function ClientsPage() {
           </>
         }
         actions={
-          <Button asChild>
-            <Link href="/clients/new">
-              <Plus className="h-4 w-4" />
-              Tambah klien
-            </Link>
-          </Button>
+          <>
+            <ExportButton entity="clients" />
+            <Button asChild>
+              <Link href="/clients/new">
+                <Plus className="h-4 w-4" />
+                Tambah klien
+              </Link>
+            </Button>
+          </>
         }
       />
 

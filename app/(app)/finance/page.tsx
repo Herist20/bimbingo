@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { GlobalPaymentsTable } from '@/components/payments/global-payments-table';
 import { PageHeader } from '@/components/shared/page-header';
 import { OnboardingHint } from '@/components/shared/onboarding-hint';
+import { ExportButton } from '@/components/shared/export-button';
 import { listPaymentsRange, summarizeFinance } from '@/lib/actions/payments';
 import { formatRupiah } from '@/lib/format';
 import { PAYMENT_METHOD_LABEL, type PaymentMethod } from '@/lib/schemas/payment';
@@ -68,6 +69,7 @@ export default async function FinanceGlobalPage() {
             <span className="chip">{payments.length} transaksi 12 bulan</span>
           </>
         }
+        actions={<ExportButton entity="payments" label="Ekspor pembayaran" />}
       />
 
       <OnboardingHint
