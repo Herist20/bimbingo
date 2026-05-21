@@ -18,6 +18,7 @@ import {
   FolderKanban,
   GraduationCap,
   LayoutDashboard,
+  ListChecks,
   Loader2,
   Plus,
   Settings,
@@ -25,6 +26,7 @@ import {
   Users,
 } from 'lucide-react';
 import { globalSearch, type SearchHit } from '@/lib/actions/search';
+import { dispatchQuickAddTask } from './quick-add-task-modal';
 
 export const CMDK_OPEN_EVENT = 'bimbingo:cmdk-open';
 
@@ -239,6 +241,24 @@ export function CommandPalette() {
               </CommandGroup>
               <CommandSeparator />
               <CommandGroup heading="Aksi cepat">
+                <CommandItem
+                  value="task-baru tambah quick add"
+                  onSelect={() => {
+                    setOpen(false);
+                    dispatchQuickAddTask();
+                  }}
+                  className="gap-3"
+                >
+                  <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--brand-soft)] text-[var(--brand-ink)]">
+                    <ListChecks className="h-3.5 w-3.5" />
+                  </span>
+                  <span className="flex flex-1 flex-col">
+                    <span className="text-sm">Tambah task baru</span>
+                    <span className="text-[11px] text-[var(--text-muted)]">
+                      Pilih proyek + judul tanpa keluar halaman
+                    </span>
+                  </span>
+                </CommandItem>
                 {QUICK_ACTIONS.map((t) => {
                   const Icon = t.icon;
                   return (

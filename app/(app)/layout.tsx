@@ -5,6 +5,7 @@ import { SidebarProvider } from '@/components/shared/sidebar-context';
 import { Topbar } from '@/components/shared/topbar';
 import { CommandPalette } from '@/components/shared/command-palette';
 import { KeyboardShortcuts } from '@/components/shared/keyboard-shortcuts';
+import { QuickAddTaskModal } from '@/components/shared/quick-add-task-modal';
 
 export default async function DashboardLayout({
   children,
@@ -45,6 +46,7 @@ export default async function DashboardLayout({
         </div>
         <CommandPalette />
         <KeyboardShortcuts />
+        <QuickAddTaskModal />
       </div>
     </SidebarProvider>
   );

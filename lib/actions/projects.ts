@@ -485,6 +485,40 @@ export async function bulkArchiveProjects(
   }
 }
 
+export interface ProjectLiteRow {
+  id: string;
+  title: string;
+  status: string;
+  client_name: string;
+}
+
+export async function listActiveProjectsLite(): Promise<ActionResult<ProjectLiteRow[]>> {
+  try {
+    await requireUser();
+    const supabase = await getServerSupabase();
+    const { data, error } = await supabase
+      .from('projects')
+      .select('id, title, status, client:clients!inner(full_name)')
+      .is('archived_at', null)
+      .eq('status', 'active')
+      .order('updated_at', { ascending: false })
+      .limit(50);
+    if (error) throw error;
+    const rows: ProjectLiteRow[] = (data ?? []).map((p) => {
+      const client = (p as unknown as { client?: { full_name?: string } }).client;
+      return {
+        id: p.id,
+        title: p.title,
+        status: p.status,
+        client_name: client?.full_name ?? '—',
+      };
+    });
+    return ok(rows);
+  } catch (e) {
+    return fail(e);
+  }
+}
+
 export async function bulkRestoreProjects(
   ids: string[],
 ): Promise<ActionResult<{ count: number }>> {
