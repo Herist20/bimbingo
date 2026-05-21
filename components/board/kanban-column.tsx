@@ -6,7 +6,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { TaskCard } from './task-card';
+import { TaskCard, type RecentChange } from './task-card';
 import {
   TASK_STATUS_LABEL,
   TASK_STATUS_TONE,
@@ -20,9 +20,16 @@ interface KanbanColumnProps {
   tasks: TaskRow[];
   onTaskClick: (task: TaskRow) => void;
   onAddTask: (status: TaskStatus) => void;
+  recentChanges?: Map<string, RecentChange>;
 }
 
-export function KanbanColumn({ status, tasks, onTaskClick, onAddTask }: KanbanColumnProps) {
+export function KanbanColumn({
+  status,
+  tasks,
+  onTaskClick,
+  onAddTask,
+  recentChanges,
+}: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: `column:${status}`,
     data: { type: 'column', status },
@@ -62,7 +69,12 @@ export function KanbanColumn({ status, tasks, onTaskClick, onAddTask }: KanbanCo
             </p>
           ) : (
             tasks.map((task) => (
-              <TaskCard key={task.id} task={task} onClick={onTaskClick} />
+              <TaskCard
+                key={task.id}
+                task={task}
+                onClick={onTaskClick}
+                recentChange={recentChanges?.get(task.id)}
+              />
             ))
           )}
         </SortableContext>

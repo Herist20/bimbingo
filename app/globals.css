@@ -267,4 +267,55 @@
     background: var(--brand-soft);
     color: var(--brand-ink);
   }
+
+  /* Task card flash — status berubah baru saja */
+  @keyframes task-status-flash {
+    0% {
+      background-color: var(--brand-soft);
+      box-shadow: 0 0 0 2px var(--brand), 0 8px 24px -6px oklch(0.56 0.16 35 / 35%);
+      transform: scale(1.012);
+    }
+    30% {
+      background-color: var(--brand-soft);
+      box-shadow: 0 0 0 2px var(--brand-soft), 0 4px 14px -6px oklch(0.56 0.16 35 / 18%);
+      transform: scale(1);
+    }
+    100% {
+      background-color: var(--bg-base);
+      box-shadow: 0 1px 2px -1px oklch(0.2 0.02 50 / 8%);
+      transform: scale(1);
+    }
+  }
+  .task-flash {
+    animation: task-status-flash 3.6s ease-out forwards;
+  }
+
+  @keyframes status-chip-slide {
+    0% {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.92);
+    }
+    12% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    85% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-2px) scale(0.96);
+    }
+  }
+  .status-chip-pop {
+    animation: status-chip-slide 3.6s ease-in-out forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .task-flash,
+    .status-chip-pop {
+      animation: none !important;
+    }
+  }
 }

@@ -22,7 +22,10 @@ import { TASK_STATUSES, type TaskStatus } from '@/lib/schemas/task';
 import type { CustomFieldRow } from '@/lib/schemas/custom-field';
 import { moveTask, type TaskRow } from '@/lib/actions/tasks';
 import { useRealtimeTasks } from './use-realtime-tasks';
+import type { RecentChange } from './task-card';
 import { cn } from '@/lib/utils';
+
+const FLASH_TTL_MS = 3600;
 
 interface KanbanBoardProps {
   projectId: string;
@@ -35,6 +38,51 @@ export function KanbanBoard({ projectId, initialTasks, customFields = [] }: Kanb
   const [activeTask, setActiveTask] = React.useState<TaskRow | null>(null);
   const [detailTask, setDetailTask] = React.useState<TaskRow | null>(null);
   const [quickAddStatus, setQuickAddStatus] = React.useState<TaskStatus | null>(null);
+  const [recentChanges, setRecentChanges] = React.useState<Map<string, RecentChange>>(new Map());
+
+  // Detect status changes vs previous render → pulse indicator
+  const prevSnapshotRef = React.useRef<Map<string, string>>(
+    new Map(initialTasks.map((t) => [t.id, t.status])),
+  );
+
+  React.useEffect(() => {
+    const prev = prevSnapshotRef.current;
+    const next = new Map<string, string>();
+    const additions: Array<[string, RecentChange]> = [];
+    const now = Date.now();
+    for (const t of tasks) {
+      next.set(t.id, t.status);
+      const prevStatus = prev.get(t.id);
+      if (prevStatus && prevStatus !== t.status) {
+        additions.push([t.id, { from: prevStatus, to: t.status, at: now }]);
+      }
+    }
+    prevSnapshotRef.current = next;
+    if (additions.length === 0) return;
+    setRecentChanges((curr) => {
+      const merged = new Map(curr);
+      for (const [id, change] of additions) merged.set(id, change);
+      return merged;
+    });
+  }, [tasks]);
+
+  // Cleanup expired entries
+  React.useEffect(() => {
+    if (recentChanges.size === 0) return;
+    const earliest = Math.min(...Array.from(recentChanges.values()).map((c) => c.at));
+    const delay = Math.max(50, FLASH_TTL_MS - (Date.now() - earliest));
+    const timer = window.setTimeout(() => {
+      setRecentChanges((curr) => {
+        const now = Date.now();
+        const next = new Map<string, RecentChange>();
+        for (const [id, c] of curr) {
+          if (now - c.at < FLASH_TTL_MS) next.set(id, c);
+        }
+        return next.size === curr.size ? curr : next;
+      });
+    }, delay);
+    return () => window.clearTimeout(timer);
+  }, [recentChanges]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -146,6 +194,7 @@ export function KanbanBoard({ projectId, initialTasks, customFields = [] }: Kanb
               tasks={tasksByStatus.get(status) ?? []}
               onTaskClick={(t) => setDetailTask(t)}
               onAddTask={(s) => setQuickAddStatus(s)}
+              recentChanges={recentChanges}
             />
           ))}
         </div>
