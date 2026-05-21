@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { PageHeader } from '@/components/shared/page-header';
+import { WhatsAppButton } from '@/components/shared/whatsapp-button';
 import { getClient } from '@/lib/actions/clients';
 import { listCustomFields } from '@/lib/actions/custom-fields';
 import { CustomDataSection } from '@/components/custom-fields/custom-data-section';
@@ -51,12 +52,18 @@ export default async function ClientDetailPage({
           </>
         }
         actions={
-          <Button asChild variant="secondary">
-            <Link href={`/clients/${c.id}/edit`}>
-              <PencilLine className="h-4 w-4" />
-              Edit
-            </Link>
-          </Button>
+          <>
+            <WhatsAppButton
+              phone={c.whatsapp}
+              context={{ clientName: c.nickname || c.full_name }}
+            />
+            <Button asChild variant="secondary">
+              <Link href={`/clients/${c.id}/edit`}>
+                <PencilLine className="h-4 w-4" />
+                Edit
+              </Link>
+            </Button>
+          </>
         }
       />
 

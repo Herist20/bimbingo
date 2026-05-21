@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { PageHeader } from '@/components/shared/page-header';
+import { WhatsAppButton } from '@/components/shared/whatsapp-button';
 import { ProjectStatusBadge } from '@/components/projects/project-status-badge';
 import { MilestoneEditor } from '@/components/projects/milestone-editor';
 import { LecturerAssignments } from '@/components/projects/lecturer-assignments';
@@ -81,6 +82,16 @@ export default async function ProjectDetailPage({
                 Keuangan
               </Link>
             </Button>
+            {project.client?.whatsapp ? (
+              <WhatsAppButton
+                phone={project.client.whatsapp}
+                context={{
+                  clientName: project.client.full_name,
+                  projectTitle: project.title,
+                  outstanding: finance.outstanding,
+                }}
+              />
+            ) : null}
             <Button asChild variant="secondary">
               <Link href={`/projects/${project.id}/edit`}>
                 <PencilLine className="h-4 w-4" />
