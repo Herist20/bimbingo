@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { CalendarClock, CreditCard, FolderKanban, Plus, Users, Wallet } from 'lucide-react';
+import { CalendarClock, CreditCard, FolderKanban, MessageCircle, Plus, Users, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -12,6 +12,39 @@ import { PageHeader } from '@/components/shared/page-header';
 import { OnboardingHint } from '@/components/shared/onboarding-hint';
 import { getDashboardSummary } from '@/lib/actions/dashboard';
 import { formatRupiah, formatTanggal, formatTanggalRelatif } from '@/lib/format';
+import { WA_TEMPLATES, waLink } from '@/lib/whatsapp';
+
+function deadlineWaHref(args: {
+  phone: string | null;
+  clientName: string;
+  projectTitle: string;
+  dueDate: string;
+}): string | null {
+  if (!args.phone) return null;
+  const due = new Date(args.dueDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const daysToDeadline = Math.round((due.getTime() - today.getTime()) / 86400000);
+  const message = WA_TEMPLATES.deadline.build({
+    clientName: args.clientName,
+    projectTitle: args.projectTitle,
+    daysToDeadline,
+  });
+  return waLink({ phone: args.phone, message });
+}
+
+function followupWaHref(args: {
+  phone: string | null;
+  clientName: string;
+  projectTitle: string;
+}): string | null {
+  if (!args.phone) return null;
+  const message = WA_TEMPLATES.followup.build({
+    clientName: args.clientName,
+    projectTitle: args.projectTitle,
+  });
+  return waLink({ phone: args.phone, message });
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -151,30 +184,52 @@ export default async function DashboardHomePage() {
               </p>
             ) : (
               <ul className="flex flex-col divide-y" style={{ borderColor: 'var(--border)' }}>
-                {data.upcoming_deadlines.map((t) => (
-                  <li key={t.task_id} className="flex items-start justify-between gap-2 py-2.5">
-                    <div className="min-w-0 flex-1">
-                      <Link
-                        href={`/projects/${t.project_id}/board`}
-                        className="block truncate text-sm font-medium hover:underline"
-                      >
-                        {t.title}
-                      </Link>
-                      <p className="truncate text-xs text-[var(--text-muted)]">
-                        {t.client_name} · {t.project_title}
-                      </p>
-                    </div>
-                    <div className="shrink-0 text-right">
-                      <div className="flex items-center justify-end gap-1 text-xs text-[var(--text-secondary)]">
-                        <CalendarClock className="h-3.5 w-3.5" />
-                        {formatTanggal(t.due_date)}
+                {data.upcoming_deadlines.map((t) => {
+                  const waHref = deadlineWaHref({
+                    phone: t.client_whatsapp,
+                    clientName: t.client_name,
+                    projectTitle: t.project_title,
+                    dueDate: t.due_date,
+                  });
+                  return (
+                    <li key={t.task_id} className="group flex items-start justify-between gap-2 py-2.5">
+                      <div className="min-w-0 flex-1">
+                        <Link
+                          href={`/projects/${t.project_id}/board`}
+                          className="block truncate text-sm font-medium hover:underline"
+                        >
+                          {t.title}
+                        </Link>
+                        <p className="truncate text-xs text-[var(--text-muted)]">
+                          {t.client_name} · {t.project_title}
+                        </p>
                       </div>
-                      <p className="text-[10px] text-[var(--text-muted)]">
-                        {formatTanggalRelatif(t.due_date)}
-                      </p>
-                    </div>
-                  </li>
-                ))}
+                      <div className="flex shrink-0 items-start gap-2">
+                        {waHref ? (
+                          <a
+                            href={waHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`Kirim reminder WhatsApp ke ${t.client_name}`}
+                            title={`Kirim reminder WhatsApp ke ${t.client_name}`}
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--success)] opacity-0 transition-opacity hover:bg-[var(--success-soft)] group-hover:opacity-100"
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" />
+                          </a>
+                        ) : null}
+                        <div className="text-right">
+                          <div className="flex items-center justify-end gap-1 text-xs text-[var(--text-secondary)]">
+                            <CalendarClock className="h-3.5 w-3.5" />
+                            {formatTanggal(t.due_date)}
+                          </div>
+                          <p className="text-[10px] text-[var(--text-muted)]">
+                            {formatTanggalRelatif(t.due_date)}
+                          </p>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </CardContent>
@@ -195,22 +250,43 @@ export default async function DashboardHomePage() {
               </p>
             ) : (
               <ul className="flex flex-col divide-y" style={{ borderColor: 'var(--border)' }}>
-                {data.stale_projects.map((p) => (
-                  <li key={p.project_id} className="flex items-start justify-between gap-2 py-2.5">
-                    <div className="min-w-0 flex-1">
-                      <Link
-                        href={`/projects/${p.project_id}`}
-                        className="block truncate text-sm font-medium hover:underline"
-                      >
-                        {p.title}
-                      </Link>
-                      <p className="truncate text-xs text-[var(--text-muted)]">{p.client_name}</p>
-                    </div>
-                    <p className="shrink-0 text-xs text-[var(--text-secondary)]">
-                      {formatTanggalRelatif(p.updated_at)}
-                    </p>
-                  </li>
-                ))}
+                {data.stale_projects.map((p) => {
+                  const waHref = followupWaHref({
+                    phone: p.client_whatsapp,
+                    clientName: p.client_name,
+                    projectTitle: p.title,
+                  });
+                  return (
+                    <li key={p.project_id} className="group flex items-start justify-between gap-2 py-2.5">
+                      <div className="min-w-0 flex-1">
+                        <Link
+                          href={`/projects/${p.project_id}`}
+                          className="block truncate text-sm font-medium hover:underline"
+                        >
+                          {p.title}
+                        </Link>
+                        <p className="truncate text-xs text-[var(--text-muted)]">{p.client_name}</p>
+                      </div>
+                      <div className="flex shrink-0 items-start gap-2">
+                        {waHref ? (
+                          <a
+                            href={waHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`Follow up WhatsApp ke ${p.client_name}`}
+                            title={`Follow up WhatsApp ke ${p.client_name}`}
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--success)] opacity-0 transition-opacity hover:bg-[var(--success-soft)] group-hover:opacity-100"
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" />
+                          </a>
+                        ) : null}
+                        <p className="text-xs text-[var(--text-secondary)]">
+                          {formatTanggalRelatif(p.updated_at)}
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </CardContent>

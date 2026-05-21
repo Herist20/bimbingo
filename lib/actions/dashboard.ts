@@ -11,12 +11,14 @@ export type UpcomingDeadline = {
   project_id: string;
   project_title: string;
   client_name: string;
+  client_whatsapp: string | null;
 };
 
 export type StaleProject = {
   project_id: string;
   title: string;
   client_name: string;
+  client_whatsapp: string | null;
   updated_at: string;
 };
 
@@ -92,7 +94,7 @@ export async function getDashboardSummary(): Promise<ActionResult<DashboardSumma
           id, title, due_date, status, project_id,
           project:projects!inner(
             id, title, status, archived_at,
-            client:clients!inner(full_name)
+            client:clients!inner(full_name, whatsapp)
           )
         `)
         .neq('status', 'done')
@@ -102,7 +104,7 @@ export async function getDashboardSummary(): Promise<ActionResult<DashboardSumma
         .limit(8),
       supabase
         .from('projects')
-        .select(`id, title, updated_at, status, archived_at, client:clients!inner(full_name)`)
+        .select(`id, title, updated_at, status, archived_at, client:clients!inner(full_name, whatsapp)`)
         .is('archived_at', null)
         .eq('status', 'active')
         .lt('updated_at', fiveDaysAgoISO)
@@ -145,7 +147,13 @@ export async function getDashboardSummary(): Promise<ActionResult<DashboardSumma
     const upcoming: UpcomingDeadline[] = (upcomingTasksRes.data ?? [])
       .map((t) => {
         const proj = (t as unknown as {
-          project?: { id: string; title: string; status: string; archived_at: string | null; client?: { full_name?: string } };
+          project?: {
+            id: string;
+            title: string;
+            status: string;
+            archived_at: string | null;
+            client?: { full_name?: string; whatsapp?: string | null };
+          };
         }).project;
         if (!proj || proj.archived_at || proj.status !== 'active') return null;
         return {
@@ -156,17 +164,19 @@ export async function getDashboardSummary(): Promise<ActionResult<DashboardSumma
           project_id: proj.id,
           project_title: proj.title,
           client_name: proj.client?.full_name ?? '—',
+          client_whatsapp: proj.client?.whatsapp ?? null,
         } as UpcomingDeadline;
       })
       .filter((v): v is UpcomingDeadline => v !== null)
       .slice(0, 5);
 
     const stale: StaleProject[] = (staleRes.data ?? []).map((p) => {
-      const client = (p as unknown as { client?: { full_name?: string } }).client;
+      const client = (p as unknown as { client?: { full_name?: string; whatsapp?: string | null } }).client;
       return {
         project_id: p.id,
         title: p.title,
         client_name: client?.full_name ?? '—',
+        client_whatsapp: client?.whatsapp ?? null,
         updated_at: p.updated_at,
       };
     }).slice(0, 5);
