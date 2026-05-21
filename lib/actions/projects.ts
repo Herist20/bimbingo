@@ -492,6 +492,84 @@ export interface ProjectLiteRow {
   client_name: string;
 }
 
+export interface ProjectClientRow {
+  id: string;
+  title: string;
+  type: string;
+  status: string;
+  total_value: number;
+  start_date: string | null;
+  target_end_date: string | null;
+  archived_at: string | null;
+  total_paid: number;
+  outstanding: number;
+  progress_percent: number;
+  updated_at: string;
+}
+
+export async function listProjectsByClient(
+  clientId: string,
+): Promise<ActionResult<ProjectClientRow[]>> {
+  try {
+    await requireUser();
+    const supabase = await getServerSupabase();
+
+    const { data: projects, error } = await supabase
+      .from('projects')
+      .select(
+        'id, title, type, status, total_value, start_date, target_end_date, archived_at, updated_at',
+      )
+      .eq('client_id', clientId)
+      .order('updated_at', { ascending: false });
+    if (error) throw error;
+    if (!projects || projects.length === 0) return ok([]);
+
+    const ids = projects.map((p) => p.id);
+    const [{ data: finance }, { data: progress }] = await Promise.all([
+      supabase
+        .from('project_finance_summary')
+        .select('project_id, total_paid, outstanding')
+        .in('project_id', ids),
+      supabase
+        .from('project_progress_summary')
+        .select('project_id, progress_percent')
+        .in('project_id', ids),
+    ]);
+
+    const finMap = new Map(
+      (finance ?? []).map((f) => [
+        f.project_id,
+        { total_paid: f.total_paid ?? 0, outstanding: f.outstanding ?? 0 },
+      ]),
+    );
+    const progMap = new Map(
+      (progress ?? []).map((p) => [p.project_id, p.progress_percent ?? 0]),
+    );
+
+    const rows: ProjectClientRow[] = projects.map((p) => {
+      const fin = finMap.get(p.id) ?? { total_paid: 0, outstanding: p.total_value };
+      return {
+        id: p.id,
+        title: p.title,
+        type: p.type,
+        status: p.status,
+        total_value: p.total_value,
+        start_date: p.start_date,
+        target_end_date: p.target_end_date,
+        archived_at: p.archived_at,
+        updated_at: p.updated_at,
+        total_paid: fin.total_paid,
+        outstanding: fin.outstanding,
+        progress_percent: progMap.get(p.id) ?? 0,
+      };
+    });
+
+    return ok(rows);
+  } catch (e) {
+    return fail(e);
+  }
+}
+
 export async function listActiveProjectsLite(): Promise<ActionResult<ProjectLiteRow[]>> {
   try {
     await requireUser();

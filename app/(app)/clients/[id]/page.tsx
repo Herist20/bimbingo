@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { PageHeader } from '@/components/shared/page-header';
 import { WhatsAppButton } from '@/components/shared/whatsapp-button';
+import { ClientProjectsSection } from '@/components/clients/client-projects-section';
 import { getClient } from '@/lib/actions/clients';
 import { listCustomFields } from '@/lib/actions/custom-fields';
 import { CustomDataSection } from '@/components/custom-fields/custom-data-section';
@@ -118,6 +119,8 @@ export default async function ClientDetailPage({
       ) : null}
 
       <CustomDataSection fields={customFields} data={c.custom_data ?? {}} />
+
+      <ClientProjectsSection clientId={c.id} clientName={c.nickname || c.full_name} />
 
       <Separator />
 
