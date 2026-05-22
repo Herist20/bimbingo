@@ -380,44 +380,143 @@ Total **target biaya MVP: Rp 0/bulan** (domain opsional).
 
 Diperlukan setelah migrasi `20260522000001_client_portal.sql` diapply, agar invite + login OTP klien berfungsi.
 
-### 10.1 Switch Magic Link template ke OTP code
+### 10.1 Switch Magic Link template ke OTP code (anti-linkify)
 
 Supabase Dashboard → Authentication → Email Templates → **Magic Link**:
 
 - **Subject:** `Kode masuk Bimbingo: {{ .Token }}`
-- **Body:**
+- **Body (HTML, anti auto-linkify Gmail/Outlook/Apple Mail):**
 
+  ```html
+  <!-- Anti format-detection iOS/Apple Mail -->
+  <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
+    <p style="font-size: 14px; color: #555; margin: 0 0 8px;">
+      Kode masuk Bimbingo Anda:
+    </p>
+
+    <!-- Wrap dalam <a href="#"> + pointer-events:none supaya email client tidak override jadi link IP/telepon -->
+    <a href="#" style="
+      display: inline-block;
+      color: #7a3e1c;
+      text-decoration: none;
+      pointer-events: none;
+      font-family: 'Courier New', Consolas, monospace;
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: 0.4em;
+      padding: 14px 20px 14px 24px;
+      background: #fdf6ec;
+      border: 1px solid #d4a574;
+      border-radius: 8px;
+      margin: 8px 0;
+    ">{{ .Token }}</a>
+
+    <p style="font-size: 13px; color: #888; margin: 12px 0 0;">
+      <strong style="color: #c4542a;">Salin (copy)</strong> kode di atas dan tempel ke kolom OTP di portal.
+      <strong style="color: #c4542a;">Jangan diklik</strong> — kode bukan link.
+    </p>
+
+    <p style="font-size: 12px; color: #aaa; margin-top: 16px;">
+      Kode berlaku 1 jam. Jangan bagikan ke siapapun.
+    </p>
+  </div>
+
+  <style>
+    /* Apple Mail data detector override */
+    a[x-apple-data-detectors] {
+      color: inherit !important;
+      text-decoration: none !important;
+      pointer-events: none !important;
+    }
+  </style>
   ```
-  Kode masuk Bimbingo Anda:
 
-  {{ .Token }}
+**Alasan teknis (2 lapis bug yang ditangani):**
 
-  Kode ini berlaku 1 jam. Jangan bagikan ke siapapun.
-  ```
+1. **Default `{{ .ConfirmationURL }}` rentan email prefetcher.** Microsoft Defender Safe Links / Gmail prefetcher "bakar" link sebelum klien klik → error `Token has expired or is invalid`. OTP code text-only tidak punya masalah ini.
 
-Alasan: link `{{ .ConfirmationURL }}` default sering "dibakar" oleh email prefetcher (Microsoft Defender Safe Links, Gmail prefetcher) sebelum klien sempat klik — menyebabkan error `Token has expired or is invalid`. OTP code 6-digit tidak punya masalah ini.
+2. **Auto-linkify email client.** Gmail (web + mobile), Outlook, Apple Mail otomatis bikin teks numerik jadi link kalau pattern cocok dengan IPv4 atau nomor telepon. Token 10 digit `1102189146` → Gmail render sebagai `http://1.102.189.146/` (tiap oktet ≤ 255 = valid IPv4). Klik = nyasar ke IP random.
 
-### 10.2 Customize Invite User template — pakai `token_hash` flow
+   Mitigasi:
+   - `letter-spacing: 0.4em` antar digit memecah pola → email client tidak deteksi numerik.
+   - Bungkus dalam `<a href="#"` + `pointer-events: none` → email client tidak overwrite anchor existing.
+   - Label visual "Jangan diklik" instruksi eksplisit ke pengguna.
+   - `<style>` untuk Apple Mail `x-apple-data-detectors` override.
+
+### 10.1.1 OTP length (opsional)
+
+Default Supabase OTP length = 6 digit. Length 6 ideal — mudah disalin, tidak bertabrakan dengan pola IP/telepon yang sering di-linkify. Jangan set > 6 kecuali ada alasan kuat.
+
+Kalau sudah terlanjur set 8+ digit: Auth → Providers → Email → OTP Length → balik ke `6` → Save.
+
+### 10.2 Customize Invite User template — pakai `token_hash` flow (HTML)
 
 Authentication → Email Templates → **Invite User**:
 
 - **Subject:** `Anda diundang ke Portal Bimbingo`
-- **Body:**
+- **Body (HTML, dengan CTA button supaya jelas + anti-linkify pendukung):**
 
+  ```html
+  <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
+    <h2 style="font-size: 20px; color: #7a3e1c; margin: 0 0 12px;">
+      Halo {{ .Data.full_name }} 👋
+    </h2>
+
+    <p style="font-size: 14px; color: #555; line-height: 1.6; margin: 0 0 16px;">
+      Anda diundang mengakses <strong>Portal Klien Bimbingo</strong> untuk memantau
+      progres skripsi, status tahap, dan pembayaran termin.
+    </p>
+
+    <p style="font-size: 14px; color: #555; line-height: 1.6; margin: 0 0 20px;">
+      Klik tombol di bawah untuk mengaktifkan akun:
+    </p>
+
+    <a
+      href="{{ .SiteURL }}/portal/auth/callback?token_hash={{ .TokenHash }}&type=invite"
+      style="
+        display: inline-block;
+        background: #c4542a;
+        color: #ffffff;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 15px;
+        margin: 8px 0;
+      "
+    >
+      Aktifkan akun portal →
+    </a>
+
+    <p style="font-size: 13px; color: #888; line-height: 1.6; margin: 20px 0 0;">
+      Setelah aktif, login berikutnya cukup masukkan email Anda dan kode OTP 6 digit
+      yang akan kami kirim ke email ini.
+    </p>
+
+    <p style="font-size: 12px; color: #aaa; margin-top: 24px; border-top: 1px solid #eee; padding-top: 12px;">
+      Tidak merasa diundang? Abaikan email ini — akun tidak akan aktif tanpa Anda
+      klik tombol di atas.
+    </p>
+  </div>
+
+  <style>
+    a[x-apple-data-detectors] {
+      color: inherit !important;
+      text-decoration: none !important;
+      pointer-events: none !important;
+    }
+  </style>
   ```
-  Halo {{ .Data.full_name }},
 
-  Anda diundang ke Portal Bimbingo. Klik link di bawah untuk mengaktifkan akun:
+**Alasan teknis:**
 
-  {{ .SiteURL }}/portal/auth/callback?token_hash={{ .TokenHash }}&type=invite
+1. **Token hash flow lebih bersih.** Default `{{ .ConfirmationURL }}` pakai **implicit hash flow** (`#access_token=...`) → token di hash fragment yang tidak dikirim ke server, harus diproses JS browser. Pakai `{{ .TokenHash }}` di query param → server route `/portal/auth/callback` langsung baca lewat `verifyOtp({ token_hash, type: 'invite' })`. Tidak ada JS hack, tidak ada token bocor di URL bar.
 
-  Setelah aktif, login berikutnya cukup masukkan email Anda dan kode 6 digit
-  yang dikirim ke email ini.
-  ```
+2. **Format CTA button (bukan raw link).** Tombol berwarna brand-coloured + label jelas "Aktifkan akun portal" menghilangkan ambiguitas: ini link beneran (boleh klik), beda dari OTP code (jangan klik).
 
-**Alasan**: default `{{ .ConfirmationURL }}` pakai **implicit/hash flow** (`#access_token=...`) yang nyasar ke Site URL bukan redirect URL portal. Pakai `{{ .TokenHash }}` + query param eksplisit → masuk ke server route handler `/portal/auth/callback` yang panggil `verifyOtp({ token_hash, type: 'invite' })`. Lebih bersih + tidak butuh JS untuk parse hash.
+3. **`{{ .Data.full_name }}`** mengambil dari user_metadata yang dikirim server action `inviteClientToPortal` saat memanggil `auth.admin.inviteUserByEmail({ data: { full_name, role: 'client' } })`.
 
-`{{ .Data.full_name }}` mengambil dari user_metadata yang dikirim server action `inviteClientToPortal` saat memanggil `auth.admin.inviteUserByEmail`.
+4. **`x-apple-data-detectors`** override mencegah Apple Mail iOS otomatis ubah email/teks lain di body jadi link.
 
 ### 10.3 Redirect URLs allowlist + Site URL
 
