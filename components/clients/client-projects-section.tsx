@@ -73,64 +73,65 @@ export async function ClientProjectsSection({ clientId, clientName }: ClientProj
                 (PROJECT_TYPE_LABEL as Record<string, string>)[p.type] ?? p.type;
               const isArchived = Boolean(p.archived_at);
               return (
-                <li key={p.id}>
+                <li
+                  key={p.id}
+                  className="group flex flex-col gap-2 px-5 py-4 transition-colors hover:bg-[var(--bg-subtle)] sm:flex-row sm:items-center sm:gap-4"
+                >
+                  {/* Title + meta — single anchor, no nesting */}
                   <Link
                     href={`/projects/${p.id}`}
-                    className="group flex flex-col gap-2 px-5 py-4 transition-colors hover:bg-[var(--bg-subtle)] sm:flex-row sm:items-center sm:gap-4"
+                    className="flex min-w-0 flex-1 flex-col gap-1.5"
                   >
-                    {/* Title + meta */}
-                    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-display text-sm font-semibold text-[var(--text-display)] group-hover:underline">
-                          {p.title}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-display text-sm font-semibold text-[var(--text-display)] group-hover:underline">
+                        {p.title}
+                      </span>
+                      <ProjectStatusBadge status={p.status} />
+                      {isArchived ? <span className="chip">Arsip</span> : null}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-[var(--text-muted)]">
+                      <span>{typeLabel}</span>
+                      {p.target_end_date ? (
+                        <span>
+                          · Target {formatTanggal(p.target_end_date)} (
+                          {formatTanggalRelatif(p.target_end_date)})
                         </span>
-                        <ProjectStatusBadge status={p.status} />
-                        {isArchived ? <span className="chip">Arsip</span> : null}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-3 text-[11px] text-[var(--text-muted)]">
-                        <span>{typeLabel}</span>
-                        {p.target_end_date ? (
-                          <span>
-                            · Target {formatTanggal(p.target_end_date)} (
-                            {formatTanggalRelatif(p.target_end_date)})
-                          </span>
-                        ) : null}
-                      </div>
-
-                      {/* Progress bar */}
-                      <div className="mt-1 flex items-center gap-2">
-                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--bg-muted)] sm:max-w-[16rem]">
-                          <div
-                            className="h-full rounded-full bg-[var(--brand)]"
-                            style={{ width: `${Math.min(100, Math.max(0, p.progress_percent))}%` }}
-                          />
-                        </div>
-                        <span className="font-mono text-[10px] text-[var(--text-muted)]">
-                          {p.progress_percent}%
-                        </span>
-                      </div>
+                      ) : null}
                     </div>
 
-                    {/* Finance + action */}
-                    <div className="flex shrink-0 items-center gap-3 sm:flex-col sm:items-end">
-                      <div className="flex flex-col text-right">
-                        <span className="font-display text-sm font-semibold text-[var(--text-display)]">
-                          {formatRupiah(p.total_value)}
-                        </span>
-                        {p.outstanding > 0 ? (
-                          <span className="text-[10px] text-[var(--warning)]">
-                            sisa {formatRupiah(p.outstanding)}
-                          </span>
-                        ) : (
-                          <span className="text-[10px] text-[var(--success)]">lunas</span>
-                        )}
+                    {/* Progress bar */}
+                    <div className="mt-1 flex items-center gap-2">
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--bg-muted)] sm:max-w-[16rem]">
+                        <div
+                          className="h-full rounded-full bg-[var(--brand)]"
+                          style={{ width: `${Math.min(100, Math.max(0, p.progress_percent))}%` }}
+                        />
                       </div>
-                      <div className="flex items-center gap-1">
-                        <BoardLink projectId={p.id} />
-                        <ArrowRight className="h-3.5 w-3.5 text-[var(--text-muted)] opacity-0 transition-opacity group-hover:opacity-100" />
-                      </div>
+                      <span className="font-mono text-[10px] text-[var(--text-muted)]">
+                        {p.progress_percent}%
+                      </span>
                     </div>
                   </Link>
+
+                  {/* Finance + action — siblings of main link, not nested */}
+                  <div className="flex shrink-0 items-center gap-3 sm:flex-col sm:items-end">
+                    <div className="flex flex-col text-right">
+                      <span className="font-display text-sm font-semibold text-[var(--text-display)]">
+                        {formatRupiah(p.total_value)}
+                      </span>
+                      {p.outstanding > 0 ? (
+                        <span className="text-[10px] text-[var(--warning)]">
+                          sisa {formatRupiah(p.outstanding)}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-[var(--success)]">lunas</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <BoardLink projectId={p.id} />
+                      <ArrowRight className="h-3.5 w-3.5 text-[var(--text-muted)] opacity-0 transition-opacity group-hover:opacity-100" />
+                    </div>
+                  </div>
                 </li>
               );
             })}
