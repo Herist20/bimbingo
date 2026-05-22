@@ -47,6 +47,9 @@ export default async function PortalProjectDetailPage({
   const { id } = await params;
   const supabase = await getServerSupabase();
 
+  const { data: { user } } = await supabase.auth.getUser();
+  const currentUserId = user?.id ?? '';
+
   const { data: project } = await supabase
     .from('projects')
     .select('id, title, type, status, target_end_date, start_date')
@@ -202,7 +205,7 @@ export default async function PortalProjectDetailPage({
             Urut sesuai progres pembimbing. Status diperbarui setelah review tiap bab.
           </p>
         </div>
-        <MilestoneList milestones={(milestones ?? []) as MilestoneRow[]} />
+        <MilestoneList milestones={(milestones ?? []) as MilestoneRow[]} currentUserId={currentUserId} />
       </section>
 
       <Card>

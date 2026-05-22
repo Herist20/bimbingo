@@ -2,6 +2,7 @@ import { Check, Circle, CircleDot, FileEdit, FileWarning, Hourglass } from 'luci
 
 import { Badge } from '@/components/ui/badge';
 import { formatTanggal } from '@/lib/format';
+import { MilestoneDetailDrawer } from './milestone-detail-drawer';
 
 type MilestoneStatus =
   | 'not-started'
@@ -49,7 +50,13 @@ export type MilestoneRow = {
   status: MilestoneStatus;
 };
 
-export function MilestoneList({ milestones }: { milestones: MilestoneRow[] }) {
+export function MilestoneList({
+  milestones,
+  currentUserId,
+}: {
+  milestones: MilestoneRow[];
+  currentUserId: string;
+}) {
   if (milestones.length === 0) {
     return (
       <div
@@ -80,7 +87,7 @@ export function MilestoneList({ milestones }: { milestones: MilestoneRow[] }) {
           m.status === 'revisi';
 
         return (
-          <li key={m.id} className="relative flex gap-4 pb-4 last:pb-0">
+          <li id={`m-${m.id}`} key={m.id} className="relative flex gap-4 pb-4 last:pb-0">
             {!isLast ? (
               <span
                 aria-hidden
@@ -142,6 +149,7 @@ export function MilestoneList({ milestones }: { milestones: MilestoneRow[] }) {
                 </div>
                 <Badge tone={tone}>{STATUS_LABEL[m.status]}</Badge>
               </div>
+              <MilestoneDetailDrawer milestoneId={m.id} currentUserId={currentUserId} />
             </div>
           </li>
         );
