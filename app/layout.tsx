@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Bricolage_Grotesque, Hanken_Grotesk, JetBrains_Mono } from 'next/font/google';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/shared/theme-provider';
+import { HashAuthCatcher } from '@/components/shared/hash-auth-catcher';
 import './globals.css';
 
 const hankenGrotesk = Hanken_Grotesk({
@@ -113,6 +114,7 @@ export default function RootLayout({
         />
       </head>
       <body>
+        <HashAuthCatcher />
         <ThemeProvider>{children}</ThemeProvider>
         <Toaster />
       </body>

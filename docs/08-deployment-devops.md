@@ -386,7 +386,7 @@ Supabase Dashboard → Authentication → Email Templates → **Magic Link**:
 
 Alasan: link `{{ .ConfirmationURL }}` default sering "dibakar" oleh email prefetcher (Microsoft Defender Safe Links, Gmail prefetcher) sebelum klien sempat klik — menyebabkan error `Token has expired or is invalid`. OTP code 6-digit tidak punya masalah ini.
 
-### 10.2 Customize Invite User template
+### 10.2 Customize Invite User template — pakai `token_hash` flow
 
 Authentication → Email Templates → **Invite User**:
 
@@ -396,23 +396,39 @@ Authentication → Email Templates → **Invite User**:
   ```
   Halo {{ .Data.full_name }},
 
-  Anda telah diundang untuk mengakses portal klien Bimbingo.
+  Anda diundang ke Portal Bimbingo. Klik link di bawah untuk mengaktifkan akun:
 
-  Klik link di bawah untuk mengaktifkan akun:
-
-  {{ .ConfirmationURL }}
+  {{ .SiteURL }}/portal/auth/callback?token_hash={{ .TokenHash }}&type=invite
 
   Setelah aktif, login berikutnya cukup masukkan email Anda dan kode 6 digit
   yang dikirim ke email ini.
   ```
 
+**Alasan**: default `{{ .ConfirmationURL }}` pakai **implicit/hash flow** (`#access_token=...`) yang nyasar ke Site URL bukan redirect URL portal. Pakai `{{ .TokenHash }}` + query param eksplisit → masuk ke server route handler `/portal/auth/callback` yang panggil `verifyOtp({ token_hash, type: 'invite' })`. Lebih bersih + tidak butuh JS untuk parse hash.
+
 `{{ .Data.full_name }}` mengambil dari user_metadata yang dikirim server action `inviteClientToPortal` saat memanggil `auth.admin.inviteUserByEmail`.
 
-### 10.3 Smoke test end-to-end (manual)
+### 10.3 Redirect URLs allowlist + Site URL
+
+Authentication → URL Configuration:
+
+- **Site URL:** `https://<prod-domain>.vercel.app` (Production). Saat dev manual invite dari `pnpm dev`, sementara ubah ke `http://localhost:3000`.
+- **Redirect URLs** (tambah semuanya):
+  - `http://localhost:3000/portal/auth/callback`
+  - `https://<prod-domain>.vercel.app/portal/auth/callback`
+  - Opsional wildcard: `http://localhost:3000/**` dan `https://<prod-domain>.vercel.app/**`
+
+Tanpa URL di allowlist, Supabase **fall back ke Site URL** dan abaikan `redirectTo` dari `inviteUserByEmail`. Itu yang bikin invite mendarat di `http://localhost:3000/#access_token=...` alih-alih `/portal/auth/callback`.
+
+### 10.4 Defense in depth — `HashAuthCatcher`
+
+Kalau template lama masih dipakai atau Redirect URL belum di-allowlist, klien bisa nyasar ke Site URL dengan hash. Komponen `components/shared/hash-auth-catcher.tsx` (terpasang di root layout) auto-forward `#access_token=...` ke `/portal/auth/callback#...` yang punya HTML fallback untuk `setSession` via supabase-js browser client. Tidak mengganggu navigasi normal (no-op kalau hash tidak ada).
+
+### 10.5 Smoke test (continued)
 
 1. Login admin → buka klien dengan email diisi → klik tombol "Aktifkan portal".
 2. Buka inbox klien (gunakan email alternate untuk testing) → klik link invite.
-3. Browser arahkan ke `${NEXT_PUBLIC_APP_URL}/portal/auth/callback?code=...` → otomatis redirect ke `/portal`.
+3. Browser arahkan ke `{{ .SiteURL }}/portal/auth/callback?token_hash=...&type=invite` → server `verifyOtp` → redirect ke `/portal`.
 4. Verifikasi: dashboard tampil, cuma data klien tersebut yang muncul.
 5. Logout via tombol di header → `/portal/login`.
 6. Masuk lagi: input email → terima 6-digit code → input → masuk portal.
@@ -420,7 +436,7 @@ Authentication → Email Templates → **Invite User**:
 8. Dari admin: klien yang sama → klik "Cabut akses" → konfirmasi.
 9. Klien refresh (atau tunggu ≤5 menit cache cookie `bm_role`) → request berikutnya redirect ke `/portal/login` karena auth user sudah dihapus.
 
-### 10.4 RLS smoke test
+### 10.6 RLS smoke test
 
 Jalankan `tests/rls/portal.sql` via Supabase SQL editor — substitute UUID, compare counts dengan expected value yang tertulis di komentar tiap query. Lihat `tests/rls/README.md` untuk panduan.
 
