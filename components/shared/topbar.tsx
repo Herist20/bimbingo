@@ -1,5 +1,6 @@
 import { Breadcrumbs } from './breadcrumbs';
 import { CommandTrigger } from './command-trigger';
+import { InboxBell } from './inbox-bell';
 import { MobileSidebar } from './mobile-sidebar';
 import { NotificationBell } from './notification-bell';
 import { SidebarToggle } from './sidebar-toggle';
@@ -26,6 +27,7 @@ export function Topbar({ email, fullName, avatarUrl }: TopbarProps) {
       <Breadcrumbs />
       <div className="flex-1" />
       <CommandTrigger />
+      <InboxBell />
       <NotificationBell />
       <ThemeToggle />
       <UserMenu email={email} fullName={fullName} avatarUrl={avatarUrl} />

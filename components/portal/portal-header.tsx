@@ -6,6 +6,7 @@ import { GraduationCap, LogOut } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/shared/theme-toggle';
+import { PortalNotificationBell } from './portal-notification-bell';
 import { cn } from '@/lib/utils';
 
 const NAV = [
@@ -98,6 +99,7 @@ export function PortalHeader({ fullName }: { fullName: string }) {
             </span>
             <span className="text-sm text-[var(--text-secondary)]">{fullName}</span>
           </div>
+          <PortalNotificationBell />
           <ThemeToggle />
           <Button
             variant="secondary"

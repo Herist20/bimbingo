@@ -257,6 +257,31 @@ export async function setPaymentVerified(
       .select(COLUMNS)
       .single();
     if (error) throw error;
+
+    if (verified) {
+      const { data: project } = await supabase
+        .from('projects')
+        .select('id, title, client_id')
+        .eq('id', data.project_id)
+        .maybeSingle();
+      if (project) {
+        const { data: client } = await supabase
+          .from('clients')
+          .select('client_user_id')
+          .eq('id', project.client_id)
+          .maybeSingle();
+        if (client?.client_user_id) {
+          const { notifyUser } = await import('./_notify');
+          await notifyUser(client.client_user_id, 'payment_verified', {
+            payment_id: id,
+            amount: data.amount,
+            project_id: data.project_id,
+            project_title: project.title,
+          });
+        }
+      }
+    }
+
     revalidatePath('/finance');
     revalidatePath(`/projects/${data.project_id}/finance`);
     return ok(data as PaymentRow);

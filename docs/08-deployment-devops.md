@@ -550,6 +550,27 @@ Kalau template lama masih dipakai atau Redirect URL belum di-allowlist, klien bi
 
 Jalankan `tests/rls/portal.sql` via Supabase SQL editor — substitute UUID, compare counts dengan expected value yang tertulis di komentar tiap query. Lihat `tests/rls/README.md` untuk panduan.
 
+### 10.8 Smoke test — portal interaktif lite
+
+Setelah deploy fase interaktif (komentar + file + notif), jalankan flow berikut manual:
+
+1. Admin login → `/projects/[id]` → klik subpage **Komentar Klien** (link/tab baru).
+2. Admin upload file ke `/projects/[id]/files` dengan **kategori `draft`** + pilih milestone bab.
+3. Klien login → `/portal/proyek/[id]` → expand milestone yang sama → file muncul → klik **Unduh** → browser buka signed URL (TTL 5 menit).
+4. Klien ketik komentar di textarea → submit → bubble muncul di kanan (warna brand-soft).
+5. Admin balas dari `/projects/[id]/comments` → bubble baru muncul di kiri (warna elevated).
+6. Klien refresh → balasan terlihat. **Bell** badge unread count > 0.
+7. Klien klik **Bell** → list 10 notif terbaru → klik notif → mark-read + navigate ke milestone.
+8. Admin: **InboxBell** di topbar admin sama-sama berfungsi (tab ke kanan dari NotificationBell urgent reminders).
+9. Admin verify payment (set `verified=true` di `/projects/[id]/finance`) → klien dapat notif `payment_verified`.
+10. Admin set milestone status approve via `setMilestoneStatus(milestoneId, 'approved')` (manual via project edit / dev tool) → klien dapat notif `milestone_status`.
+11. RLS smoke SQL `tests/rls/portal-interactive.sql` — substitute UUID + run di SQL editor, bandingkan expected count.
+
+**Negative tests:**
+- Klien coba post komentar dengan `author_role='admin'` lewat dev tools → harus ditolak RLS.
+- Klien coba lihat file kategori `bukti-bayar`/`administrasi`/`lainnya` → tidak muncul di drawer.
+- Klien coba SELECT `notifications` milik admin → 0 rows.
+
 ### 10.7 SMTP rate limit & custom SMTP email
 
 Supabase built-in SMTP punya **rate limit ketat** untuk email auth (default ~2–4 email/jam per project di free tier). Saat testing aktif (invite + login OTP berulang), gampang kena `429: email rate limit exceeded`.

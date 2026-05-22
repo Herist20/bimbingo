@@ -729,3 +729,49 @@ export async function detachLecturer(
   }
 }
 
+export async function setMilestoneStatus(
+  milestoneId: string,
+  status: 'not-started' | 'in-progress' | 'submitted' | 'revisi' | 'approved' | 'done',
+): Promise<ActionResult<{ id: string }>> {
+  try {
+    await requireUser();
+    const supabase = await getServerSupabase();
+    const { data, error } = await supabase
+      .from('project_milestones')
+      .update({ status })
+      .eq('id', milestoneId)
+      .select('id, title, project_id')
+      .single();
+    if (error) throw error;
+
+    const { data: project } = await supabase
+      .from('projects')
+      .select('id, title, client_id')
+      .eq('id', data.project_id)
+      .maybeSingle();
+    if (project) {
+      const { data: client } = await supabase
+        .from('clients')
+        .select('client_user_id')
+        .eq('id', project.client_id)
+        .maybeSingle();
+      if (client?.client_user_id) {
+        const { notifyUser } = await import('./_notify');
+        await notifyUser(client.client_user_id, 'milestone_status', {
+          milestone_id: data.id,
+          milestone_title: data.title,
+          project_id: data.project_id,
+          project_title: project.title,
+          new_status: status,
+        });
+      }
+    }
+
+    revalidatePath(`/projects/${data.project_id}`);
+    revalidatePath(`/portal/proyek/${data.project_id}`);
+    return ok({ id: data.id });
+  } catch (e) {
+    return fail(e);
+  }
+}
+
