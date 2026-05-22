@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import { ArrowRight, FolderKanban, KanbanSquare, Plus } from 'lucide-react';
+import { ArrowRight, FolderKanban, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { BoardLink } from '@/components/clients/board-link';
 import {
   Card,
   CardContent,
@@ -125,15 +126,7 @@ export async function ClientProjectsSection({ clientId, clientName }: ClientProj
                         )}
                       </div>
                       <div className="flex items-center gap-1">
-                        <Link
-                          href={`/projects/${p.id}/board`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex h-7 items-center gap-1 rounded-md border bg-[var(--bg-base)] px-2 text-[10px] font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-subtle)] hover:text-[var(--text-primary)]"
-                          style={{ borderColor: 'var(--border)' }}
-                        >
-                          <KanbanSquare className="h-3 w-3" />
-                          Board
-                        </Link>
+                        <BoardLink projectId={p.id} />
                         <ArrowRight className="h-3.5 w-3.5 text-[var(--text-muted)] opacity-0 transition-opacity group-hover:opacity-100" />
                       </div>
                     </div>
