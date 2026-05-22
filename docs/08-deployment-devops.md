@@ -362,3 +362,65 @@ Total **target biaya MVP: Rp 0/bulan** (domain opsional).
 3. **Login bermasalah.** Cek `auth.users` di Supabase → cek session cookie di browser dev tools → cek `middleware.ts` log.
 4. **Storage upload gagal.** Cek bucket policy + quota usage di Supabase dashboard.
 5. **Free tier paused.** Klik "Restore project" di Supabase dashboard. Aktifkan keepalive cron.
+
+---
+
+## 10. Konfigurasi Email Template Supabase — Client Portal
+
+Diperlukan setelah migrasi `20260522000001_client_portal.sql` diapply, agar invite + login OTP klien berfungsi.
+
+### 10.1 Switch Magic Link template ke OTP code
+
+Supabase Dashboard → Authentication → Email Templates → **Magic Link**:
+
+- **Subject:** `Kode masuk Bimbingo: {{ .Token }}`
+- **Body:**
+
+  ```
+  Kode masuk Bimbingo Anda:
+
+  {{ .Token }}
+
+  Kode ini berlaku 1 jam. Jangan bagikan ke siapapun.
+  ```
+
+Alasan: link `{{ .ConfirmationURL }}` default sering "dibakar" oleh email prefetcher (Microsoft Defender Safe Links, Gmail prefetcher) sebelum klien sempat klik — menyebabkan error `Token has expired or is invalid`. OTP code 6-digit tidak punya masalah ini.
+
+### 10.2 Customize Invite User template
+
+Authentication → Email Templates → **Invite User**:
+
+- **Subject:** `Anda diundang ke Portal Bimbingo`
+- **Body:**
+
+  ```
+  Halo {{ .Data.full_name }},
+
+  Anda telah diundang untuk mengakses portal klien Bimbingo.
+
+  Klik link di bawah untuk mengaktifkan akun:
+
+  {{ .ConfirmationURL }}
+
+  Setelah aktif, login berikutnya cukup masukkan email Anda dan kode 6 digit
+  yang dikirim ke email ini.
+  ```
+
+`{{ .Data.full_name }}` mengambil dari user_metadata yang dikirim server action `inviteClientToPortal` saat memanggil `auth.admin.inviteUserByEmail`.
+
+### 10.3 Smoke test end-to-end (manual)
+
+1. Login admin → buka klien dengan email diisi → klik tombol "Aktifkan portal".
+2. Buka inbox klien (gunakan email alternate untuk testing) → klik link invite.
+3. Browser arahkan ke `${NEXT_PUBLIC_APP_URL}/portal/auth/callback?code=...` → otomatis redirect ke `/portal`.
+4. Verifikasi: dashboard tampil, cuma data klien tersebut yang muncul.
+5. Logout via tombol di header → `/portal/login`.
+6. Masuk lagi: input email → terima 6-digit code → input → masuk portal.
+7. Coba akses `/dashboard` sebagai klien → middleware redirect ke `/portal` (admin route diblok).
+8. Dari admin: klien yang sama → klik "Cabut akses" → konfirmasi.
+9. Klien refresh (atau tunggu ≤5 menit cache cookie `bm_role`) → request berikutnya redirect ke `/portal/login` karena auth user sudah dihapus.
+
+### 10.4 RLS smoke test
+
+Jalankan `tests/rls/portal.sql` via Supabase SQL editor — substitute UUID, compare counts dengan expected value yang tertulis di komentar tiap query. Lihat `tests/rls/README.md` untuk panduan.
+

@@ -11,6 +11,9 @@ import { getClient } from '@/lib/actions/clients';
 import { listCustomFields } from '@/lib/actions/custom-fields';
 import { CustomDataSection } from '@/components/custom-fields/custom-data-section';
 import { formatTanggal, formatTanggalRelatif } from '@/lib/format';
+import { Badge } from '@/components/ui/badge';
+import { InvitePortalButton } from '@/components/clients/invite-portal-button';
+import { RevokePortalButton } from '@/components/clients/revoke-portal-button';
 
 export default async function ClientDetailPage({
   params,
@@ -119,6 +122,34 @@ export default async function ClientDetailPage({
       ) : null}
 
       <CustomDataSection fields={customFields} data={c.custom_data ?? {}} />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Akses Portal</CardTitle>
+          <CardDescription>
+            Klien dapat login di /portal/login dan melihat progres proyek sendiri.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {!c.email ? (
+            <p className="text-sm text-[var(--text-muted)]">
+              Tambahkan email klien dulu sebelum mengaktifkan portal.
+            </p>
+          ) : c.client_user_id ? (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Badge tone="success">Aktif</Badge>
+                <span className="text-sm text-[var(--text-muted)]">
+                  Klien login dengan {c.email}.
+                </span>
+              </div>
+              <RevokePortalButton clientId={c.id} />
+            </div>
+          ) : (
+            <InvitePortalButton clientId={c.id} />
+          )}
+        </CardContent>
+      </Card>
 
       <ClientProjectsSection clientId={c.id} clientName={c.nickname || c.full_name} />
 
