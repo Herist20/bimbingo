@@ -344,7 +344,7 @@ Data fetching: server component, query via authenticated Supabase client. RLS ot
 <div class="grid sm:grid-cols-3 gap-4">
   <Stat label="Progres" value="{progress}%" />
   <Stat label="Status" value={statusBadge} />
-  <Stat label="Target selesai" value={target_date} />
+  <Stat label="Target selesai" value={target_end_date} />
 </div>
 
 <section>
