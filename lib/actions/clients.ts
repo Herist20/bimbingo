@@ -31,10 +31,11 @@ export type ClientRow = {
   created_at: string;
   updated_at: string;
   custom_data: Record<string, unknown>;
+  client_user_id: string | null;
 };
 
 const COLUMNS =
-  'id, full_name, nickname, whatsapp, email, university, faculty, major, student_id, semester, target_defense, source, notes, archived_at, created_at, updated_at, custom_data';
+  'id, full_name, nickname, whatsapp, email, university, faculty, major, student_id, semester, target_defense, source, notes, archived_at, created_at, updated_at, custom_data, client_user_id';
 
 async function fetchClientCustomFields(
   supabase: Awaited<ReturnType<typeof getServerSupabase>>,
