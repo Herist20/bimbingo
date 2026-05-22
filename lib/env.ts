@@ -4,7 +4,6 @@ const ServerEnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(20),
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(20),
 });
 
 const ClientEnvSchema = ServerEnvSchema.pick({
@@ -19,7 +18,6 @@ function readServerEnv() {
     NEXT_PUBLIC_SUPABASE_URL: raw.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: raw.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_APP_URL: raw.NEXT_PUBLIC_APP_URL,
-    SUPABASE_SERVICE_ROLE_KEY: raw.SUPABASE_SERVICE_ROLE_KEY,
   });
   if (!parsed.success) {
     throw new Error(
@@ -39,3 +37,16 @@ function readClientEnv() {
 
 export const serverEnv = typeof window === 'undefined' ? readServerEnv() : (null as never);
 export const clientEnv = readClientEnv();
+
+// Service-role key dibaca lazy — hanya saat operasi admin (invite/cron/webhook)
+// benar-benar dipanggil. Mencegah env var ini menjadi syarat module-load untuk
+// route yang sekadar IMPORT (tapi tidak invoke) `getAdminSupabase`.
+export function getServiceRoleKey(): string {
+  const v = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!v || v.length < 20) {
+    throw new Error(
+      '[env] SUPABASE_SERVICE_ROLE_KEY belum di-set di environment. Tambahkan di Vercel Project Settings → Environment Variables.',
+    );
+  }
+  return v;
+}
