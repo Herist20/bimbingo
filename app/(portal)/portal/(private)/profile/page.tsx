@@ -1,4 +1,5 @@
-import { Button } from '@/components/ui/button';
+import { redirect } from 'next/navigation';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getServerSupabase } from '@/lib/supabase/server';
 
@@ -9,11 +10,12 @@ export default async function PortalProfilePage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  if (!user) redirect('/portal/login');
 
   const { data: client } = await supabase
     .from('clients')
     .select('full_name, email, whatsapp, university, faculty, major')
-    .eq('client_user_id', user!.id)
+    .eq('client_user_id', user.id)
     .maybeSingle();
 
   return (
@@ -39,11 +41,9 @@ export default async function PortalProfilePage() {
         </CardContent>
       </Card>
 
-      <form action="/auth/sign-out" method="post">
-        <Button type="submit" variant="secondary">
-          Keluar
-        </Button>
-      </form>
+      <p className="text-xs text-[var(--text-muted)]">
+        Untuk keluar, gunakan tombol <strong>Keluar</strong> di kanan atas.
+      </p>
     </div>
   );
 }
