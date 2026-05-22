@@ -217,6 +217,7 @@ export type Database = {
           category: string | null
           filename: string
           id: string
+          milestone_id: string | null
           mime_type: string | null
           owner_id: string
           path: string
@@ -230,6 +231,7 @@ export type Database = {
           category?: string | null
           filename: string
           id?: string
+          milestone_id?: string | null
           mime_type?: string | null
           owner_id: string
           path: string
@@ -243,6 +245,7 @@ export type Database = {
           category?: string | null
           filename?: string
           id?: string
+          milestone_id?: string | null
           mime_type?: string | null
           owner_id?: string
           path?: string
@@ -252,6 +255,13 @@ export type Database = {
           uploaded_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "files_milestone_id_fkey"
+            columns: ["milestone_id"]
+            isOneToOne: false
+            referencedRelation: "project_milestones"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "files_project_id_fkey"
             columns: ["project_id"]
@@ -327,6 +337,68 @@ export type Database = {
           university?: string | null
           updated_at?: string
           whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      milestone_comments: {
+        Row: {
+          author_id: string | null
+          author_role: string
+          body: string
+          created_at: string
+          id: string
+          milestone_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_role: string
+          body: string
+          created_at?: string
+          id?: string
+          milestone_id: string
+        }
+        Update: {
+          author_id?: string | null
+          author_role?: string
+          body?: string
+          created_at?: string
+          id?: string
+          milestone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "milestone_comments_milestone_id_fkey"
+            columns: ["milestone_id"]
+            isOneToOne: false
+            referencedRelation: "project_milestones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          payload: Json
+          read_at: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payload?: Json
+          read_at?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payload?: Json
+          read_at?: string | null
+          type?: string
+          user_id?: string
         }
         Relationships: []
       }
