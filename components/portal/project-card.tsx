@@ -40,7 +40,8 @@ export function ProjectCard(p: ProjectCardProps) {
   return (
     <Link
       href={`/portal/proyek/${p.id}`}
-      className="surface-card group relative flex flex-col gap-4 overflow-hidden p-5 transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-pop)]"
+      className="group relative flex flex-col gap-4 overflow-hidden rounded-lg border bg-[var(--bg-subtle)] p-5 transition-all hover:-translate-y-0.5 hover:border-[var(--brand-soft)] hover:shadow-[var(--shadow-pop)]"
+      style={{ borderColor: 'var(--border)', boxShadow: 'var(--shadow-card)' }}
     >
       <div
         aria-hidden
@@ -156,7 +157,10 @@ function Row({
 }) {
   return (
     <div className="flex items-start gap-2">
-      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[var(--bg-subtle)] text-[var(--text-muted)]">
+      <span
+        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border bg-[var(--bg-elevated)] text-[var(--text-muted)]"
+        style={{ borderColor: 'var(--border-subtle)' }}
+      >
         {icon}
       </span>
       <div className="min-w-0 flex-1">

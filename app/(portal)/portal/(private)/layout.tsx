@@ -33,19 +33,19 @@ export default async function PortalPrivateLayout({
   return (
     <div
       className="relative flex min-h-screen flex-col"
-      style={{ backgroundColor: 'var(--bg-shell)' }}
+      style={{ backgroundColor: 'var(--bg-elevated)' }}
     >
-      {/* Ambient warm gradient — match landing/admin tone */}
+      {/* Warm gradient halo di belakang header — tidak meluber ke main supaya main tetap putih bersih */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 -z-0 h-[340px] opacity-90"
+        className="pointer-events-none absolute inset-x-0 top-0 -z-0 h-[140px] opacity-60"
         style={{
           backgroundImage:
-            'radial-gradient(60% 80% at 20% 0%, var(--brand-soft) 0%, transparent 55%), radial-gradient(50% 80% at 95% 10%, var(--accent-soft) 0%, transparent 60%)',
+            'radial-gradient(60% 100% at 20% 0%, var(--brand-soft) 0%, transparent 60%), radial-gradient(50% 100% at 95% 10%, var(--accent-soft) 0%, transparent 65%)',
         }}
       />
       <PortalHeader fullName={displayName} />
-      <main className="relative z-10 mx-auto w-full max-w-5xl flex-1 px-4 pb-16 pt-8 sm:px-6">
+      <main className="relative z-10 mx-auto w-full max-w-5xl flex-1 px-4 pb-16 pt-10 sm:px-6">
         {children}
       </main>
       <footer
@@ -54,7 +54,9 @@ export default async function PortalPrivateLayout({
       >
         <p>
           © Bimbingo · Pendampingan skripsi dengan ketenangan.{' '}
-          <span className="text-[var(--text-secondary)]">Butuh bantuan? Hubungi pembimbing Anda lewat WhatsApp.</span>
+          <span className="text-[var(--text-secondary)]">
+            Butuh bantuan? Hubungi pembimbing Anda lewat WhatsApp.
+          </span>
         </p>
       </footer>
     </div>

@@ -96,7 +96,10 @@ export default async function PortalProfilePage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 font-display text-base">
-              <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--bg-subtle)] text-[var(--brand-ink)]">
+              <span
+                className="flex h-7 w-7 items-center justify-center rounded-md border bg-[var(--bg-elevated)] text-[var(--brand-ink)]"
+                style={{ borderColor: 'var(--border-subtle)' }}
+              >
                 <AtSign className="h-3.5 w-3.5" />
               </span>
               Kontak
@@ -120,7 +123,10 @@ export default async function PortalProfilePage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 font-display text-base">
-              <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--bg-subtle)] text-[var(--brand-ink)]">
+              <span
+                className="flex h-7 w-7 items-center justify-center rounded-md border bg-[var(--bg-elevated)] text-[var(--brand-ink)]"
+                style={{ borderColor: 'var(--border-subtle)' }}
+              >
                 <GraduationCap className="h-3.5 w-3.5" />
               </span>
               Akademis
@@ -185,7 +191,7 @@ export default async function PortalProfilePage() {
             atas. Sesi akan otomatis berakhir setelah 1 jam tidak aktif.
           </p>
           <div
-            className="mt-2 rounded-lg border bg-[var(--bg-subtle)] p-3 text-xs"
+            className="mt-2 rounded-lg border bg-[var(--bg-elevated)] p-3 text-xs"
             style={{ borderColor: 'var(--border)' }}
           >
             <p className="font-medium text-[var(--text-primary)]">
@@ -215,7 +221,10 @@ function Field({
 }) {
   return (
     <div className="flex items-start gap-2">
-      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[var(--bg-subtle)] text-[var(--text-muted)]">
+      <span
+        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border bg-[var(--bg-elevated)] text-[var(--text-muted)]"
+        style={{ borderColor: 'var(--border-subtle)' }}
+      >
         {icon}
       </span>
       <div className="min-w-0 flex-1">

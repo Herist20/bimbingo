@@ -233,7 +233,10 @@ function StatCard({
         ? 'text-[var(--warning)]'
         : 'text-[var(--text-display)]';
   return (
-    <div className="surface-card relative overflow-hidden p-4">
+    <div
+      className="relative overflow-hidden rounded-lg border bg-[var(--bg-subtle)] p-4"
+      style={{ borderColor: 'var(--border)', boxShadow: 'var(--shadow-card)' }}
+    >
       <div
         aria-hidden
         className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-50"
@@ -243,7 +246,10 @@ function StatCard({
         }}
       />
       <div className="relative flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.16em] text-[var(--text-muted)]">
-        <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--bg-subtle)] text-[var(--brand-ink)]">
+        <span
+          className="flex h-6 w-6 items-center justify-center rounded-md border bg-[var(--bg-elevated)] text-[var(--brand-ink)]"
+          style={{ borderColor: 'var(--border-subtle)' }}
+        >
           {icon}
         </span>
         {label}

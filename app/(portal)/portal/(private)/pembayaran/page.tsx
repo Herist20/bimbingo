@@ -133,13 +133,14 @@ export default async function PortalPembayaranPage() {
           />
         ) : (
           <div
-            className="surface-card overflow-hidden"
+            className="overflow-hidden rounded-lg border bg-[var(--bg-subtle)]"
+            style={{ borderColor: 'var(--border)', boxShadow: 'var(--shadow-card)' }}
           >
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead
                   className="text-left"
-                  style={{ backgroundColor: 'var(--bg-subtle)' }}
+                  style={{ backgroundColor: 'var(--bg-muted)' }}
                 >
                   <tr>
                     <Th>Tanggal</Th>
@@ -153,13 +154,13 @@ export default async function PortalPembayaranPage() {
                   {(payments ?? []).map((p, idx) => (
                     <tr
                       key={p.id}
-                      className="border-t transition-colors hover:bg-[var(--bg-subtle)]"
+                      className="border-t transition-colors hover:bg-[var(--brand-soft)]/30"
                       style={{
                         borderColor: 'var(--border-subtle)',
                         backgroundColor:
                           idx % 2 === 0
                             ? 'var(--bg-elevated)'
-                            : 'color-mix(in oklab, var(--bg-elevated) 60%, var(--bg-subtle))',
+                            : 'var(--bg-subtle)',
                       }}
                     >
                       <Td>
@@ -205,7 +206,10 @@ export default async function PortalPembayaranPage() {
         />
         <CardHeader className="relative">
           <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--bg-subtle)] text-[var(--brand-ink)]">
+            <span
+              className="flex h-7 w-7 items-center justify-center rounded-md border bg-[var(--bg-elevated)] text-[var(--brand-ink)]"
+              style={{ borderColor: 'var(--border-subtle)' }}
+            >
               <Info className="h-3.5 w-3.5" />
             </span>
             <CardTitle className="font-display text-base">
@@ -258,7 +262,10 @@ function KpiCard({
         ? 'text-[var(--success)]'
         : 'text-[var(--text-display)]';
   return (
-    <div className="surface-card relative overflow-hidden p-4">
+    <div
+      className="relative overflow-hidden rounded-lg border bg-[var(--bg-subtle)] p-4"
+      style={{ borderColor: 'var(--border)', boxShadow: 'var(--shadow-card)' }}
+    >
       <div
         aria-hidden
         className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-50"
@@ -268,7 +275,10 @@ function KpiCard({
         }}
       />
       <div className="relative flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.16em] text-[var(--text-muted)]">
-        <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--bg-subtle)] text-[var(--brand-ink)]">
+        <span
+          className="flex h-6 w-6 items-center justify-center rounded-md border bg-[var(--bg-elevated)] text-[var(--brand-ink)]"
+          style={{ borderColor: 'var(--border-subtle)' }}
+        >
           {icon}
         </span>
         {label}

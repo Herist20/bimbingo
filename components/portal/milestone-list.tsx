@@ -53,8 +53,8 @@ export function MilestoneList({ milestones }: { milestones: MilestoneRow[] }) {
   if (milestones.length === 0) {
     return (
       <div
-        className="surface-card flex flex-col items-center gap-2 p-8 text-center"
-        style={{ borderStyle: 'dashed' }}
+        className="flex flex-col items-center gap-2 rounded-lg border bg-[var(--bg-subtle)] p-8 text-center"
+        style={{ borderColor: 'var(--border)', borderStyle: 'dashed' }}
       >
         <FileEdit className="h-5 w-5 text-[var(--text-muted)]" />
         <p className="text-sm font-medium text-[var(--text-primary)]">
@@ -118,7 +118,7 @@ export function MilestoneList({ milestones }: { milestones: MilestoneRow[] }) {
             </span>
 
             <div
-              className="flex-1 rounded-lg border bg-[var(--bg-elevated)] p-3 transition-colors"
+              className="flex-1 rounded-lg border bg-[var(--bg-subtle)] p-3 transition-colors"
               style={{
                 borderColor: isActive ? 'var(--brand-soft)' : 'var(--border)',
                 boxShadow: isActive ? 'var(--shadow-glow)' : undefined,
