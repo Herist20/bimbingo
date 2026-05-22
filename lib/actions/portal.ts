@@ -149,6 +149,14 @@ export async function requestPortalOtp(
       options: { shouldCreateUser: false },
     });
     if (error) {
+      const msg = error.message?.toLowerCase() ?? '';
+      const status = (error as { status?: number }).status;
+      if (status === 429 || msg.includes('rate limit') || msg.includes('email rate')) {
+        throw new ActionError(
+          'rate_limited',
+          'Terlalu banyak permintaan kode. Coba lagi dalam 1 jam, atau hubungi admin.',
+        );
+      }
       throw new ActionError(
         'internal',
         'Gagal mengirim kode. Pastikan email Anda terdaftar dan coba lagi.',

@@ -440,3 +440,27 @@ Kalau template lama masih dipakai atau Redirect URL belum di-allowlist, klien bi
 
 Jalankan `tests/rls/portal.sql` via Supabase SQL editor — substitute UUID, compare counts dengan expected value yang tertulis di komentar tiap query. Lihat `tests/rls/README.md` untuk panduan.
 
+### 10.7 SMTP rate limit & custom SMTP
+
+Supabase built-in SMTP punya **rate limit ketat** untuk email auth (default ~2–4 email/jam per project di free tier). Saat testing aktif (invite + login OTP berulang), gampang kena `429: email rate limit exceeded`.
+
+Gejala: `requestPortalOtp` return error `'rate_limited'` → toast "Terlalu banyak permintaan kode. Coba lagi dalam 1 jam, atau hubungi admin."
+
+**Solusi short-term**: tunggu 1 jam, atau hubungi admin yang trigger invite ulang.
+
+**Solusi proper (untuk produksi)**: setup **custom SMTP** di Authentication → Email Templates → SMTP Settings.
+
+Rekomendasi: **Resend** (3K email/bulan free):
+
+1. Daftar Resend → buat API key → verify domain pengirim.
+2. Supabase Dashboard → Authentication → Email Templates → SMTP Settings → Enable Custom SMTP:
+   - Host: `smtp.resend.com`
+   - Port: `465` (TLS) atau `587` (STARTTLS)
+   - Username: `resend`
+   - Password: API key Resend
+   - Sender email: email yang terverifikasi di Resend
+   - Sender name: `Bimbingo`
+3. Klik Save → trigger test email.
+
+Custom SMTP **menghilangkan rate limit** Supabase (limit beralih ke kuota Resend yang jauh lebih besar).
+
