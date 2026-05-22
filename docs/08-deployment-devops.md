@@ -4,11 +4,11 @@
 
 ## 1. Lingkungan
 
-| Env | Branch Git | URL | Database |
-|-----|------------|-----|----------|
-| **Development** | feature branches | `http://localhost:3000` | Supabase project (linked) atau `supabase start` lokal |
-| **Preview** | PR ke `main` | URL otomatis Vercel `*.vercel.app` | Supabase project yang sama (atau Branch via Supabase Branches) |
-| **Production** | `main` | `bimbingo.vercel.app` atau domain custom | Supabase project (Singapore) |
+| Env             | Branch Git       | URL                                      | Database                                                       |
+| --------------- | ---------------- | ---------------------------------------- | -------------------------------------------------------------- |
+| **Development** | feature branches | `http://localhost:3000`                  | Supabase project (linked) atau `supabase start` lokal          |
+| **Preview**     | PR ke `main`     | URL otomatis Vercel `*.vercel.app`       | Supabase project yang sama (atau Branch via Supabase Branches) |
+| **Production**  | `main`           | `bimbingo.vercel.app` atau domain custom | Supabase project (Singapore)                                   |
 
 ---
 
@@ -35,6 +35,7 @@ NEXT_TELEMETRY_DISABLED=1
 ```
 
 **Aturan keamanan kunci:**
+
 - `SUPABASE_SERVICE_ROLE_KEY` **HANYA** dipakai di server-side (RSC, Server Actions, Route Handlers).
 - Tidak boleh ada `process.env.SUPABASE_SERVICE_ROLE_KEY` di file `'use client'`.
 - Tambahkan ESLint rule `no-restricted-properties` untuk catch ini.
@@ -108,6 +109,7 @@ export const config: VercelConfig = {
 ```
 
 ### 3.3 Plan
+
 - **Hobby (free).** Cukup untuk MVP.
   - 100 GB bandwidth / bulan.
   - 100K Edge function invocations.
@@ -118,6 +120,7 @@ export const config: VercelConfig = {
   - Butuh SLA & monitoring lebih dalam.
 
 ### 3.4 Domain custom (opsional)
+
 - Beli domain di Namecheap/IDwebhost (~ Rp 150rb/tahun).
 - Vercel Dashboard → Project Settings → Domains → tambah.
 - DNS otomatis ter-validasi.
@@ -127,6 +130,7 @@ export const config: VercelConfig = {
 ## 4. Supabase Setup
 
 ### 4.1 Project creation
+
 - Region: **Singapore (ap-southeast-1)**.
 - Database password: simpan di password manager (tidak di repo).
 - DB plan: **Free** untuk MVP.
@@ -180,7 +184,9 @@ Tambah ke script `package.json`:
 Atau pakai GitHub Actions terjadwal yang dump ke GitHub artifact (free).
 
 ### 4.6 Cegah free-tier pause
+
 Supabase free tier akan pause project setelah ~ 7 hari inaktif. Mitigasi:
+
 - Vercel Cron tiap 6 jam ping endpoint `/api/health` yang melakukan `select 1`.
 - Atau cukup pastikan admin login minimal sekali per minggu.
 
@@ -189,6 +195,7 @@ Supabase free tier akan pause project setelah ~ 7 hari inaktif. Mitigasi:
 ## 5. CI/CD
 
 ### 5.1 Vercel Git Integration (default)
+
 - Push ke `main` → production deploy.
 - Push ke branch lain → preview deploy.
 - Comment otomatis di PR berisi URL preview.
@@ -238,6 +245,7 @@ jobs:
 ```
 
 ### 5.3 Migration safety
+
 - PR yang ubah `supabase/migrations/*.sql` wajib di-review.
 - Tambahkan workflow yang jalankan `supabase db lint` (jika tersedia) atau `pg_validate` di CI.
 - Untuk production, jalankan `supabase db push --linked` **manual** dari workstation (jangan otomatis di Vercel build, supaya kontrol kapan migrasi run).
@@ -246,14 +254,14 @@ jobs:
 
 ## 6. Monitoring
 
-| Aspek | Tool | Setup |
-|-------|------|-------|
-| Performance web vitals | **Vercel Speed Insights** | Aktifkan di Vercel dashboard, install paket di Next |
-| Analytics traffic | **Vercel Analytics** | Aktifkan + install paket |
-| Error tracking (opsional) | **Sentry** (free 5K events/bln) | Setup di fase 2 |
-| Database query slow log | Supabase Dashboard → Performance | Cek mingguan |
-| Storage usage | Supabase Dashboard → Storage | Cek mingguan |
-| Uptime | **UptimeRobot** (free) atau **BetterStack** | Set monitor ping `/api/health` tiap 5 menit |
+| Aspek                     | Tool                                        | Setup                                               |
+| ------------------------- | ------------------------------------------- | --------------------------------------------------- |
+| Performance web vitals    | **Vercel Speed Insights**                   | Aktifkan di Vercel dashboard, install paket di Next |
+| Analytics traffic         | **Vercel Analytics**                        | Aktifkan + install paket                            |
+| Error tracking (opsional) | **Sentry** (free 5K events/bln)             | Setup di fase 2                                     |
+| Database query slow log   | Supabase Dashboard → Performance            | Cek mingguan                                        |
+| Storage usage             | Supabase Dashboard → Storage                | Cek mingguan                                        |
+| Uptime                    | **UptimeRobot** (free) atau **BetterStack** | Set monitor ping `/api/health` tiap 5 menit         |
 
 ### Endpoint `/api/health`
 
@@ -285,9 +293,12 @@ export async function GET() {
 
 ```ts
 export const log = {
-  info:  (msg: string, ctx?: object) => console.log(JSON.stringify({ level: 'info', msg, ts: new Date().toISOString(), ...ctx })),
-  warn:  (msg: string, ctx?: object) => console.warn(JSON.stringify({ level: 'warn', msg, ts: new Date().toISOString(), ...ctx })),
-  error: (msg: string, ctx?: object) => console.error(JSON.stringify({ level: 'error', msg, ts: new Date().toISOString(), ...ctx })),
+  info: (msg: string, ctx?: object) =>
+    console.log(JSON.stringify({ level: 'info', msg, ts: new Date().toISOString(), ...ctx })),
+  warn: (msg: string, ctx?: object) =>
+    console.warn(JSON.stringify({ level: 'warn', msg, ts: new Date().toISOString(), ...ctx })),
+  error: (msg: string, ctx?: object) =>
+    console.error(JSON.stringify({ level: 'error', msg, ts: new Date().toISOString(), ...ctx })),
 };
 ```
 
@@ -313,13 +324,13 @@ Untuk perubahan DB destruktif: SIAPKAN migration rollback (`supabase migration n
 
 ## 9. Cost Tracking
 
-| Layanan | Free tier | Trigger upgrade |
-|---------|-----------|-----------------|
-| Vercel Hobby | 100 GB bandwidth | > 80 GB/bulan 2x berturut |
-| Supabase Free | 500 MB DB + 1 GB storage | > 400 MB DB atau > 800 MB storage |
-| Domain | ~ Rp 150rb/tahun | (sudah dibayar) |
-| Resend (email) | 3K/bln | Fase 2 jika butuh notif email |
-| Sentry | 5K events/bln | Fase 2 jika butuh error tracking |
+| Layanan        | Free tier                | Trigger upgrade                   |
+| -------------- | ------------------------ | --------------------------------- |
+| Vercel Hobby   | 100 GB bandwidth         | > 80 GB/bulan 2x berturut         |
+| Supabase Free  | 500 MB DB + 1 GB storage | > 400 MB DB atau > 800 MB storage |
+| Domain         | ~ Rp 150rb/tahun         | (sudah dibayar)                   |
+| Resend (email) | 3K/bln                   | Fase 2 jika butuh notif email     |
+| Sentry         | 5K events/bln            | Fase 2 jika butuh error tracking  |
 
 Total **target biaya MVP: Rp 0/bulan** (domain opsional).
 
@@ -327,13 +338,13 @@ Total **target biaya MVP: Rp 0/bulan** (domain opsional).
 
 ## 10. Disaster Recovery Plan
 
-| Scenario | Action |
-|----------|--------|
-| Vercel down | Tidak ada SLO; Vercel uptime historis > 99.99%. Tunggu recovery |
-| Supabase down | Tidak ada SLO free tier. Untuk Pro: support ticket. Fallback: tampilkan halaman maintenance + log |
-| Data corruption | Restore dari backup harian Supabase atau dump mingguan |
-| Code regression | `vercel promote` ke deployment sebelumnya |
-| Domain hijack | Aktifkan registrar lock + 2FA Namecheap |
+| Scenario        | Action                                                                                            |
+| --------------- | ------------------------------------------------------------------------------------------------- |
+| Vercel down     | Tidak ada SLO; Vercel uptime historis > 99.99%. Tunggu recovery                                   |
+| Supabase down   | Tidak ada SLO free tier. Untuk Pro: support ticket. Fallback: tampilkan halaman maintenance + log |
+| Data corruption | Restore dari backup harian Supabase atau dump mingguan                                            |
+| Code regression | `vercel promote` ke deployment sebelumnya                                                         |
+| Domain hijack   | Aktifkan registrar lock + 2FA Namecheap                                                           |
 
 ---
 
@@ -440,7 +451,7 @@ Kalau template lama masih dipakai atau Redirect URL belum di-allowlist, klien bi
 
 Jalankan `tests/rls/portal.sql` via Supabase SQL editor — substitute UUID, compare counts dengan expected value yang tertulis di komentar tiap query. Lihat `tests/rls/README.md` untuk panduan.
 
-### 10.7 SMTP rate limit & custom SMTP
+### 10.7 SMTP rate limit & custom SMTP email
 
 Supabase built-in SMTP punya **rate limit ketat** untuk email auth (default ~2–4 email/jam per project di free tier). Saat testing aktif (invite + login OTP berulang), gampang kena `429: email rate limit exceeded`.
 
@@ -463,4 +474,3 @@ Rekomendasi: **Resend** (3K email/bulan free):
 3. Klik Save → trigger test email.
 
 Custom SMTP **menghilangkan rate limit** Supabase (limit beralih ke kuota Resend yang jauh lebih besar).
-
