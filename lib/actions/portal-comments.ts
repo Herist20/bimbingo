@@ -55,7 +55,7 @@ export async function postMilestoneComment(
       .eq('id', parsed.data.milestoneId)
       .maybeSingle();
 
-    let projectId = m?.project_id ?? '';
+    const projectId = m?.project_id ?? '';
     if (m) {
       const { data: project } = await supabase
         .from('projects')
