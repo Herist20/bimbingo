@@ -67,3 +67,5 @@ supabase/.env
 
 # OS
 *.swp
+
+.vercel
