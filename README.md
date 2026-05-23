@@ -103,6 +103,8 @@ bimbingo/
 
 ## Deploy ke Vercel
 
+**Production live:** [`https://bimbingo.vercel.app`](https://bimbingo.vercel.app) · region `sin1` (Singapore).
+
 ### Persiapan
 
 1. Project Supabase aktif di region `ap-southeast-1`. Catat URL + keys.
@@ -146,6 +148,33 @@ Atau via Vercel dashboard:
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase project settings → API | Aman exposed ke client |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase project settings → API | **Server-only**. Jangan prefix `NEXT_PUBLIC_`. |
 | `NEXT_PUBLIC_APP_URL` | URL produksi Vercel (mis. `https://bimbingo.vercel.app`) | Dipakai OG + sitemap |
+| `CRON_SECRET` | Generate via `openssl rand -hex 32` | Auth Bearer untuk `/api/cron/*` daily reminder |
+
+### CI/CD auto-deploy
+
+Workflow GitHub Actions di `.github/workflows/deploy.yml`:
+- Push ke `main` → production deploy
+- Pull Request ke `main` → preview deploy
+- Manual: `workflow_dispatch` via Actions tab
+
+Butuh 3 GitHub Secrets di `Settings → Secrets and variables → Actions`:
+- `VERCEL_TOKEN` (generate di [vercel.com/account/tokens](https://vercel.com/account/tokens))
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
+
+Native Vercel-GitHub integration di-skip — pakai CLI via Actions. Build jalan server-side di Vercel infra (bukan `--prebuilt`).
+
+### Observability
+
+Aktif by default via `@vercel/analytics` + `@vercel/speed-insights` di root layout:
+- Web Analytics: page views, traffic sources
+- Speed Insights: Core Web Vitals (LCP, CLS, INP, FCP, TTFB) per route
+- Dashboard: `vercel.com/{team}/{project}/analytics` dan `/speed-insights`
+
+### Cron jobs
+
+`vercel.json` daftar cron schedule. Aktif:
+- `/api/cron/daily-reminders` — daily 09:00 WIB (02:00 UTC). Insert notifikasi deadline H+1/H+3/H+7 ke InboxBell admin per project owner.
 
 ### Verifikasi pasca-deploy
 
@@ -182,9 +211,9 @@ Detail lebih lengkap: [`docs/08-deployment-devops.md`](./docs/08-deployment-devo
 
 | Fase | Status | Item utama |
 |------|--------|------------|
-| **Fase 1 · MVP** | ✅ Selesai | Klien, Proyek, Tasks, Files, Keuangan, Custom Fields, Command Palette |
-| **Fase 2** | 🔄 Backlog | Notifikasi deadline (cron), client portal, payment gateway Midtrans QRIS, WhatsApp (Fonnte), audit log UI |
-| **Fase 3** | 📅 Roadmap | SaaS multi-tenant B2B, PDF invoice, AI assist ringkasan progres |
+| **Fase 1 · MVP** | ✅ Selesai | Klien, Proyek, Tasks, Files, Keuangan, Custom Fields, Command Palette, Dashboard, Audit log UI |
+| **Fase 2** | 🔄 In progress | ✅ Client portal interactive (comments, files, notif) · ✅ Cron deadline reminder · ✅ PDF invoice (browser print) · ✅ Vercel Analytics + Speed Insights · ⏳ Midtrans QRIS · ⏳ WhatsApp Fonnte API · ⏳ Multi-tenant |
+| **Fase 3** | 📅 Roadmap | SaaS multi-tenant B2B, AI assist ringkasan progres |
 
 Detail: [`docs/06-implementation-roadmap.md`](./docs/06-implementation-roadmap.md) · [`docs/09-monetization-scalability.md`](./docs/09-monetization-scalability.md).
 
