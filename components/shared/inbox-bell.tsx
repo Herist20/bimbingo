@@ -57,6 +57,15 @@ function notifText(n: NotifRow): {
         description: String(p.project_title ?? ''),
         href: '/clients',
       };
+    case 'deadline_reminder': {
+      const days = Number(p.days_to_deadline ?? 0);
+      const when = days <= 0 ? 'lewat' : days === 1 ? 'besok' : `${days} hari lagi`;
+      return {
+        title: `Deadline ${when}: ${String(p.milestone_title ?? 'milestone')}`,
+        description: String(p.project_title ?? ''),
+        href: `/projects/${projectId}`,
+      };
+    }
     default:
       return { title: 'Notifikasi', description: '', href: '/dashboard' };
   }

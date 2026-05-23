@@ -7,7 +7,8 @@ export type NotifType =
   | 'milestone_status'
   | 'payment_verified'
   | 'project_status'
-  | 'invite_activated';
+  | 'invite_activated'
+  | 'deadline_reminder';
 
 export async function notifyUser(
   userId: string,
