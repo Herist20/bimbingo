@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Bricolage_Grotesque, Hanken_Grotesk, JetBrains_Mono } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/shared/theme-provider';
 import { HashAuthCatcher } from '@/components/shared/hash-auth-catcher';
@@ -117,6 +119,8 @@ export default function RootLayout({
         <HashAuthCatcher />
         <ThemeProvider>{children}</ThemeProvider>
         <Toaster />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
