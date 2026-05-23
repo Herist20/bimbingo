@@ -72,23 +72,26 @@ export function LecturersTable({ data, customFields: initialCustomFields = [] }:
     defaultVisibility,
   );
 
-  const handleDelete = (row: LecturerRow) => {
-    if (confirmingId !== row.id) {
-      setConfirmingId(row.id);
-      toast.warning(`Hapus ${row.full_name}? Klik sekali lagi untuk konfirmasi.`);
-      window.setTimeout(() => setConfirmingId(null), 4000);
-      return;
-    }
-    startTransition(async () => {
-      const result = await deleteLecturer(row.id);
-      setConfirmingId(null);
-      if (!result.ok) {
-        toast.error(result.error.message);
+  const handleDelete = React.useCallback(
+    (row: LecturerRow) => {
+      if (confirmingId !== row.id) {
+        setConfirmingId(row.id);
+        toast.warning(`Hapus ${row.full_name}? Klik sekali lagi untuk konfirmasi.`);
+        window.setTimeout(() => setConfirmingId(null), 4000);
         return;
       }
-      toast.success('Dosen dihapus.');
-    });
-  };
+      startTransition(async () => {
+        const result = await deleteLecturer(row.id);
+        setConfirmingId(null);
+        if (!result.ok) {
+          toast.error(result.error.message);
+          return;
+        }
+        toast.success('Dosen dihapus.');
+      });
+    },
+    [confirmingId, startTransition],
+  );
 
   const columns = React.useMemo<ColumnDef<LecturerRow>[]>(() => {
     const cols: ColumnDef<LecturerRow>[] = [];
@@ -235,7 +238,7 @@ export function LecturersTable({ data, customFields: initialCustomFields = [] }:
     });
 
     return cols;
-  }, [columnVisibility, customFields, pending, confirmingId]);
+  }, [columnVisibility, customFields, pending, confirmingId, handleDelete]);
 
   const table = useReactTable({
     data,

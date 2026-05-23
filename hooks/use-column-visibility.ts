@@ -13,11 +13,13 @@ export function useColumnVisibility(key: string, defaults: Record<string, boolea
       if (raw) {
         const parsed = JSON.parse(raw) as Record<string, boolean>;
         setVisible({ ...defaults, ...parsed });
+      } else {
+        setVisible(defaults);
       }
     } catch {
       // ignore
     }
-  }, [key]);
+  }, [key, defaults]);
 
   const toggle = React.useCallback(
     (colKey: string, next?: boolean) => {
