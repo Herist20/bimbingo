@@ -22,3 +22,9 @@ If a count differs from the expected value, an RLS policy is misconfigured.
   Verifies that `client` role users see only their own client row,
   projects, milestones, and payments — and that the existing admin
   policies (owner_id-based) still work.
+- `portal-interactive.sql` — Portal interactive lite (milestone_comments,
+  files kategori scoping, notifications). Added 2026-05-22.
+- `admin-isolation.sql` — Cross-admin tenant isolation (added 2026-05-23).
+  Verifies admin_b tidak bisa SELECT/INSERT/UPDATE/DELETE row milik admin_a
+  di semua 12 tabel domain (direct owner_id + parent-derived policies).
+  Wajib di-run sebelum onboarding multi-admin atau saat add tabel baru.
