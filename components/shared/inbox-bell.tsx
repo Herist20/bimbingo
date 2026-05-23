@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
-import { Bell } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import {
@@ -121,22 +121,23 @@ export function InboxBell() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
-          type="button"
-          className="relative flex h-9 w-9 items-center justify-center rounded-md border bg-[var(--bg-elevated)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-subtle)]"
-          style={{ borderColor: 'var(--border)' }}
-          aria-label="Aktivitas"
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative"
+          aria-label={count > 0 ? `Aktivitas (${count} belum dibaca)` : 'Aktivitas'}
         >
-          <Bell className="h-4 w-4" />
+          <Mail className="h-4 w-4" />
           {count > 0 ? (
             <span
-              className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white"
+              className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[9px] font-bold leading-none text-white"
               style={{ backgroundColor: 'var(--brand)' }}
+              aria-hidden
             >
               {count > 9 ? '9+' : count}
             </span>
           ) : null}
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-0">
         <div
